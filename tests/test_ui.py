@@ -46,3 +46,22 @@ def test_search_by_name_and_invalid_ico(offline):
     assert at.selectbox[0].options[0].startswith("Demo Alfa")
     at = run("12345678")
     assert any("Neplatné IČO" in e.value for e in at.error)
+
+
+def test_agent_tab_answers_via_mcp(offline):
+    from kb import ingest
+
+    ingest.ingest_samples()
+    at = AppTest.from_file(APP, default_timeout=60).run()
+    assert not at.exception
+    assert len(at.tabs) == 2
+    at = at.chat_input[0].set_value("Kolik je firem podle právní formy?").run(timeout=60)
+    assert not at.exception
+    texts = [m.markdown[0].value for m in at.chat_message if m.markdown]
+    assert any("Společnost s ručením omezeným" in t for t in texts)
+    assert any("query_metrics" in e.label for e in at.expander)
+
+
+def test_agent_tab_empty_db_hint(offline):
+    at = AppTest.from_file(APP, default_timeout=20).run()
+    assert any("Databáze je prázdná" in i.value for i in at.info)

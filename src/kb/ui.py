@@ -2,12 +2,15 @@
 
 Offline bez AWS a site:   LLM_PROVIDER=mock OFFLINE=1 streamlit run src/kb/ui.py
 """
+import asyncio
+
 import httpx
 import streamlit as st
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from kb import kyb
+from kb import ingest, kyb
+from kb.agent import ask_agent
 from kb.clients import vies
 from kb.clients.ares import Ares, Company, NotFound, valid_ico
 from kb.config import get_settings
@@ -58,15 +61,7 @@ def _show_assessment(c: Company) -> None:
         st.json(result)
 
 
-def _body() -> None:
-    st.set_page_config(page_title="KYB demo", page_icon="🏢", layout="wide")
-    s = get_settings()
-    st.title("KYB v pár vteřinách")
-    st.caption(
-        f"Zdroj dat: {'ukázková (offline)' if s.offline else 'ARES'} · "
-        f"LLM: {'mock' if s.llm_provider == 'mock' else s.bedrock_model_id}"
-    )
-
+def _kyb_tab() -> None:
     query = st.text_input("IČO nebo název firmy", key="query", placeholder="např. 28100018 nebo Demo")
     if not query:
         st.info("Zadej IČO nebo část názvu firmy.")
@@ -112,6 +107,74 @@ def _body() -> None:
             st.error(f"VIES nedostupný: {e}")
 
 
+EXAMPLES = [
+    "Kolik je aktivních firem podle města?",
+    "Jaký je podíl zaniklých firem podle právní formy?",
+    "Programování a IT Praha",
+    "Co víš o firmě 28100026?",
+]
+
+
+def _ask_example(q: str) -> None:
+    st.session_state["agent_pending"] = q
+
+
+def _show_steps(steps: list[dict]) -> None:
+    for st_ in steps:
+        with st.expander(f"Nástroj: {st_['tool']}"):
+            st.write("Argumenty")
+            st.json(st_["args"])
+            st.write("Výsledek (zkráceno)")
+            st.code(st_["result"], language="json")
+
+
+def _agent_tab() -> None:
+    s = get_settings()
+    st.caption(
+        "Agent volá nástroje MCP serveru (semantická vrstva, vektorové hledání, profil firmy). "
+        + ("Režim mock: odpovědi skládají jednoduchá pravidla." if s.llm_provider == "mock" else f"Model: {s.bedrock_model_id}")
+    )
+    counts = ingest.counts()
+    left, right = st.columns([3, 1])
+    left.write(f"V databázi: **{counts['companies_clean']}** firem, **{counts['company_vectors']}** vektorů.")
+    if right.button("Načíst vzorová data", use_container_width=True):
+        with st.spinner("Načítám…"):
+            stats = ingest.ingest_samples()
+        st.success(f"Načteno: {stats['new']} nových, {stats['updated']} změněných, {stats['unchanged']} beze změny.")
+        counts = ingest.counts()
+    if not counts["companies_clean"]:
+        st.info("Databáze je prázdná. Načti vzorová data tlačítkem výše.")
+
+    st.write("Zkus:")
+    cols = st.columns(len(EXAMPLES))
+    for col, q in zip(cols, EXAMPLES):
+        col.button(q, key=f"ex-{q}", on_click=_ask_example, args=(q,), use_container_width=True)
+
+    history = st.session_state.setdefault("agent_history", [])
+    for m in history:
+        with st.chat_message(m["role"]):
+            st.write(m["text"])
+            if m.get("steps"):
+                _show_steps(m["steps"])
+
+    question = st.chat_input("Zeptej se na firmy…") or st.session_state.pop("agent_pending", None)
+    if not question:
+        return
+    history.append({"role": "user", "text": question})
+    with st.chat_message("user"):
+        st.write(question)
+    with st.chat_message("assistant"):
+        try:
+            with st.spinner("Agent přemýšlí…"):
+                out = asyncio.run(ask_agent(question))
+            st.write(out["answer"])
+            _show_steps(out["steps"])
+            history.append({"role": "assistant", "text": out["answer"], "steps": out["steps"]})
+        except Exception as e:  # AWS / MCP chyba nesmi shodit demo
+            st.error(f"Agent selhal: {e}")
+            history.append({"role": "assistant", "text": f"Chyba: {e}"})
+
+
 def _set_query(ico: str) -> None:
     st.session_state["query"] = ico
 
@@ -129,7 +192,18 @@ def _history() -> None:
 
 
 def main() -> None:
-    _body()
+    st.set_page_config(page_title="KYB demo", page_icon="🏢", layout="wide")
+    s = get_settings()
+    st.title("KYB v pár vteřinách")
+    st.caption(
+        f"Zdroj dat: {'ukázková (offline)' if s.offline else 'ARES'} · "
+        f"LLM: {'mock' if s.llm_provider == 'mock' else s.bedrock_model_id}"
+    )
+    tab_kyb, tab_agent = st.tabs(["KYB posouzení", "Agent (MCP)"])
+    with tab_kyb:
+        _kyb_tab()
+    with tab_agent:
+        _agent_tab()
     _history()
 
 

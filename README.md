@@ -62,6 +62,8 @@ Postgres: stacilo by zmenit `DATABASE_URL` a doinstalovat driver (psycopg).
 
 Zadej IČO (např. 28100034) nebo část názvu (např. Demo). Zobrazí kartu firmy, KYB posouzení
 (riziko, red flags) a kontrolu plátce DPH ve VIES. V postranním panelu je historie hledání.
+Záložka **Agent (MCP)**: chat s agentem, který volá nástroje MCP serveru; u každé odpovědi je vidět použitý nástroj,
+jeho argumenty a výsledek. Tlačítko „Načíst vzorová data“ spustí ingest vzorku.
 
 ## Data pipeline, semantická vrstva, MCP a agent
 

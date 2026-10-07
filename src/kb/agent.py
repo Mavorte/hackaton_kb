@@ -50,8 +50,9 @@ def _mock_plan(q: str) -> tuple[str, dict]:
 
 def _mock_answer(tool: str, data) -> str:
     if tool == "query_metrics":
-        lines = [" | ".join(str(x) for x in row) for row in data["rows"]]
-        return "[MOCK] " + " | ".join(data["columns"]) + "\n" + "\n".join(lines)
+        head = "| " + " | ".join(data["columns"]) + " |\n|" + "---|" * len(data["columns"])
+        rows = ["| " + " | ".join(str(x) for x in row) + " |" for row in data["rows"]]
+        return "[MOCK] Výsledek dotazu:\n\n" + head + "\n" + "\n".join(rows)
     if tool == "search_companies":
         return "[MOCK] Nejbližší firmy:\n" + "\n".join(f"- {r['name']} ({r['ico']}, {r['city']}, {r['status']}) skóre {r['score']}" for r in data)
     if "error" in data:
