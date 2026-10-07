@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///data/kb.db"
     opensanctions_api_key: str | None = None
     http_timeout: float = 20.0
+    # offline vyvoj: LLM_PROVIDER=mock (misto Bedrocku), OFFLINE=1 (ukazkova data misto ARES/VIES)
+    llm_provider: str = "bedrock"
+    offline: bool = False
+    samples_dir: str = "data/samples/ares"
 
 
 @lru_cache

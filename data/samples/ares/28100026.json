@@ -1,0 +1,10 @@
+{
+  "ico": "28100026",
+  "obchodniJmeno": "Demo Beta a.s.",
+  "sidlo": {"kodStatu": "CZ", "nazevObce": "Brno", "psc": 60200, "textovaAdresa": "Ukázková 22, 60200 Brno"},
+  "pravniForma": "121",
+  "datumVzniku": "2003-06-30",
+  "datumZaniku": "2022-11-01",
+  "dic": "CZ28100026",
+  "czNace": ["46900"]
+}

@@ -1,0 +1,8 @@
+{
+  "ico": "28100034",
+  "obchodniJmeno": "Demo Gama s.r.o.",
+  "sidlo": {"kodStatu": "CZ", "nazevObce": "Ostrava", "psc": 70200, "textovaAdresa": "Testovací 3, 70200 Ostrava"},
+  "pravniForma": "112",
+  "datumVzniku": "2026-08-20",
+  "czNace": ["70220"]
+}

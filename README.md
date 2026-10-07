@@ -45,6 +45,15 @@ dostupny, takze live odpoved zatim neoverena - spust check_apis.py u sebe.
 
 Postgres: stacilo by zmenit `DATABASE_URL` a doinstalovat driver (psycopg).
 
+## Offline rezim (bez AWS a bez site)
+
+    LLM_PROVIDER=mock OFFLINE=1 uvicorn kb.api:app --reload
+
+- `LLM_PROVIDER=mock`: `ask()` / `ask_json()` nevolaji Bedrock; `/kyb/{ico}` pouzije jednoduche pravidla
+  (zaniklý subjekt, mlady subjekt, chybejici DIC).
+- `OFFLINE=1`: ARES a VIES ctou smyslena data z `data/samples/ares/` (IČO 28100018, 28100026, 28100034).
+  Jine IČO vraci 404. Data jsou syntetická, tvar odpovida dokumentaci ARES.
+
 ## Testy
 
     pytest

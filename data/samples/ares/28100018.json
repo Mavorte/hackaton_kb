@@ -1,0 +1,9 @@
+{
+  "ico": "28100018",
+  "obchodniJmeno": "Demo Alfa s.r.o.",
+  "sidlo": {"kodStatu": "CZ", "nazevObce": "Praha", "psc": 11000, "textovaAdresa": "Vzorová 1, 11000 Praha 1"},
+  "pravniForma": "112",
+  "datumVzniku": "2009-03-12",
+  "dic": "CZ28100018",
+  "czNace": ["62010", "62020"]
+}

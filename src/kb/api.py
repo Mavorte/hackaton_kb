@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from kb.aws import bedrock
 from kb.clients import sanctions, vies
 from kb.clients.ares import Ares, Company, NotFound, valid_ico
+from kb.kyb import assess as kyb_assess
 from kb.db import CompanyRow, get_engine, table_names, upsert_company
 
 app = FastAPI(title="KB hackathon toolkit")
@@ -90,14 +91,9 @@ def llm(p: Prompt):
 
 @app.get("/kyb/{ico}")
 def kyb(ico: str):
-    """Mini KYB: ARES -> LLM shrnuti + red flags (kostra pro demo)."""
+    """Mini KYB: ARES -> LLM shrnuti + red flags (kostra pro demo tracku 4.1)."""
     c = _ares_get(ico)
-    result = bedrock.ask_json(
-        "Jsi KYB analytik banky. Z techto dat z ARES vytvor strucne shrnuti a seznam red flags "
-        '(napr. zaniklý subjekt, mlady subjekt, chybejici DIC). Format: {"summary": str, "red_flags": [str], "risk": "low|medium|high"}\n\n'
-        + c.model_dump_json(),
-        system="Odpovidej cesky. Vychazej jen z dodanych dat, nic si nevymyslej.",
-    )
+    result = kyb_assess(c)
     return {"company": c.model_dump(exclude={"raw"}), "assessment": result}
 
 

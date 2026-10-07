@@ -25,6 +25,8 @@ def ask(
     temperature: float | None = None,
     client=None,
 ) -> str:
+    if get_settings().llm_provider == "mock" and client is None:
+        return f"[MOCK] Odpoved bez volani modelu. Dotaz: {prompt[:80]}"
     client = client or runtime_client()
     # temperature se posila jen na vyzadani: novejsi modely (Opus 5.5) nestandardni hodnotu odmitnou (400)
     inference = {"maxTokens": max_tokens}
@@ -44,6 +46,8 @@ def ask(
 
 def ask_json(prompt: str, system: str | None = None, **kw) -> dict:
     """Pozada model o JSON a vrati ho naparsovany (oreze ```json ohraniceni)."""
+    if get_settings().llm_provider == "mock" and kw.get("client") is None:
+        return {"mock": True}
     system = (system or "") + "\nOdpovez pouze validnim JSON, bez dalsiho textu."
     text = ask(prompt, system=system.strip(), **kw).strip()
     text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text)

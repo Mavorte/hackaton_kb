@@ -1,6 +1,9 @@
 """ARES (MF CR) - zdarma, bez klice. Zaklad pro KYB: IČO -> subjekt."""
 from pydantic import BaseModel
 
+import json
+from pathlib import Path
+
 import httpx
 
 from kb.config import get_settings
@@ -50,10 +53,21 @@ def _to_company(d: dict) -> Company:
 
 class Ares:
     def __init__(self, http: httpx.Client | None = None):
-        self.http = http or httpx.Client(timeout=get_settings().http_timeout)
+        s = get_settings()
+        self.offline = s.offline and http is None
+        self.samples = Path(s.samples_dir)
+        self.http = http or (None if self.offline else httpx.Client(timeout=s.http_timeout))
+
+    def _sample(self, ico: str) -> dict:
+        f = self.samples / f"{ico}.json"
+        if not f.exists():
+            raise NotFound(ico)
+        return json.loads(f.read_text(encoding="utf-8"))
 
     def get(self, ico: str) -> Company:
         ico = ico.strip().zfill(8)
+        if self.offline:
+            return _to_company(self._sample(ico))
         r = self.http.get(f"{BASE}/ekonomicke-subjekty/{ico}")
         if r.status_code == 404:
             raise NotFound(ico)
@@ -61,6 +75,9 @@ class Ares:
         return _to_company(r.json())
 
     def search(self, name: str, limit: int = 10) -> list[Company]:
+        if self.offline:
+            found = [json.loads(f.read_text(encoding="utf-8")) for f in sorted(self.samples.glob("*.json"))]
+            return [_to_company(d) for d in found if name.lower() in d.get("obchodniJmeno", "").lower()][:limit]
         r = self.http.post(
             f"{BASE}/ekonomicke-subjekty/vyhledat",
             json={"obchodniJmeno": name, "start": 0, "pocet": limit},
@@ -71,6 +88,8 @@ class Ares:
     def get_vr(self, ico: str) -> dict:
         """Verejny rejstrik: statutari, spolecnici, kapital (raw JSON)."""
         ico = ico.strip().zfill(8)
+        if self.offline:
+            raise NotFound(ico)  # ukazkova data verejny rejstrik nemaji
         r = self.http.get(f"{BASE}/ekonomicke-subjekty-vr/{ico}")
         if r.status_code == 404:
             raise NotFound(ico)
