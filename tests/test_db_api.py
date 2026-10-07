@@ -67,3 +67,18 @@ def test_loader_keeps_own_id_column(engine, tmp_path):
     f = tmp_path / "x.csv"
     f.write_text("id,castka\n1,10\n2,20\n", encoding="utf-8")
     assert loader.load_file(f, engine=engine) == ("x", 2)
+
+
+def test_ask_model_override_and_no_temperature_by_default():
+    seen = {}
+
+    class Fake:
+        def converse(self, **kw):
+            seen.update(kw)
+            return {"output": {"message": {"content": [{"text": "x"}]}}}
+
+    bedrock.ask("hi", model_id="some.model", client=Fake())
+    assert seen["modelId"] == "some.model"
+    assert "temperature" not in seen["inferenceConfig"]
+    bedrock.ask("hi", temperature=0.5, client=Fake())
+    assert seen["inferenceConfig"]["temperature"] == 0.5

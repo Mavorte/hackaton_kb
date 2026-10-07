@@ -80,11 +80,12 @@ def companies(limit: int = Query(50, le=500)):
 class Prompt(BaseModel):
     prompt: str
     system: str | None = None
+    model: str | None = None  # prepise BEDROCK_MODEL_ID pro tento dotaz
 
 
 @app.post("/llm")
 def llm(p: Prompt):
-    return {"answer": bedrock.ask(p.prompt, system=p.system)}
+    return {"answer": bedrock.ask(p.prompt, system=p.system, model_id=p.model)}
 
 
 @app.get("/kyb/{ico}")

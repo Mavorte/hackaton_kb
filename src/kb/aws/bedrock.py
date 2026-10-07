@@ -22,14 +22,18 @@ def ask(
     system: str | None = None,
     model_id: str | None = None,
     max_tokens: int = 1024,
-    temperature: float = 0.2,
+    temperature: float | None = None,
     client=None,
 ) -> str:
     client = client or runtime_client()
+    # temperature se posila jen na vyzadani: novejsi modely (Opus 5.5) nestandardni hodnotu odmitnou (400)
+    inference = {"maxTokens": max_tokens}
+    if temperature is not None:
+        inference["temperature"] = temperature
     kwargs = {
         "modelId": model_id or get_settings().bedrock_model_id,
         "messages": [{"role": "user", "content": [{"text": prompt}]}],
-        "inferenceConfig": {"maxTokens": max_tokens, "temperature": temperature},
+        "inferenceConfig": inference,
     }
     if system:
         kwargs["system"] = [{"text": system}]
