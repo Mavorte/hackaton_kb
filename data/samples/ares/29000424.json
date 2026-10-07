@@ -1,0 +1,16 @@
+{
+  "ico": "29000424",
+  "obchodniJmeno": "Šumavská Právní služby v.o.s.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "Hradec Králové",
+    "psc": "50002",
+    "textovaAdresa": "Lipová 8, 50002 Hradec Králové"
+  },
+  "pravniForma": "111",
+  "datumVzniku": "1997-02-09",
+  "czNace": [
+    "69101"
+  ],
+  "dic": "CZ29000424"
+}

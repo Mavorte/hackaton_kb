@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     llm_provider: str = "bedrock"
     offline: bool = False
     samples_dir: str = "data/samples/ares"
+    embed_model_id: str = "amazon.titan-embed-text-v2:0"
+    embed_dim: int = 512
 
 
 @lru_cache

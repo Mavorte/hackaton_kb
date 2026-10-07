@@ -1,0 +1,17 @@
+{
+  "ico": "29000211",
+  "obchodniJmeno": "Šumavská Logistika v.o.s.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "Brno",
+    "psc": "60200",
+    "textovaAdresa": "Polní 88, 60200 Brno"
+  },
+  "pravniForma": "111",
+  "datumVzniku": "2026-05-25",
+  "czNace": [
+    "49410",
+    "52290"
+  ],
+  "dic": "CZ29000211"
+}

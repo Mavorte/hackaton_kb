@@ -1,0 +1,17 @@
+{
+  "ico": "29000289",
+  "obchodniJmeno": "Šumavská Reality s.r.o.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "Plzeň",
+    "psc": "30100",
+    "textovaAdresa": "Polní 113, 30100 Plzeň"
+  },
+  "pravniForma": "112",
+  "datumVzniku": "2002-02-19",
+  "czNace": [
+    "68201",
+    "68310"
+  ],
+  "dic": "CZ29000289"
+}

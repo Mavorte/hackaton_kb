@@ -1,0 +1,17 @@
+{
+  "ico": "29001684",
+  "obchodniJmeno": "Orlická Software s.r.o.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "Plzeň",
+    "psc": 30100,
+    "textovaAdresa": "Nádražní 98, 30100 Plzeň"
+  },
+  "pravniForma": "112",
+  "datumVzniku": "2019-02-17",
+  "czNace": [
+    "62010",
+    "62020"
+  ],
+  "dic": "CZ29001684"
+}

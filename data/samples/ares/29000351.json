@@ -1,0 +1,18 @@
+{
+  "ico": "29000351",
+  "obchodniJmeno": "Kvantum Logistika s.r.o.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "České Budějovice",
+    "psc": "37001",
+    "textovaAdresa": "Vinohradská 74, 37001 České Budějovice"
+  },
+  "pravniForma": "112",
+  "datumVzniku": "1999-08-14",
+  "czNace": [
+    "49410",
+    "52290"
+  ],
+  "datumZaniku": "2001-07-31",
+  "dic": "CZ29000351"
+}

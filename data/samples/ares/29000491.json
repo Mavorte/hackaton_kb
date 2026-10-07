@@ -1,0 +1,16 @@
+{
+  "ico": "29000491",
+  "obchodniJmeno": "Slezská Reality s.r.o.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "České Budějovice",
+    "psc": "37001",
+    "textovaAdresa": "Dlouhá 22, 37001 České Budějovice"
+  },
+  "pravniForma": "112",
+  "datumVzniku": "2026-01-14",
+  "czNace": [
+    "68201",
+    "68310"
+  ]
+}

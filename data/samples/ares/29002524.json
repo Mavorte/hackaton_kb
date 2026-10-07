@@ -1,0 +1,17 @@
+{
+  "ico": "29002524",
+  "obchodniJmeno": "Orlická Reality s.r.o.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "Plzeň",
+    "psc": 30100,
+    "textovaAdresa": "Školní 35, 30100 Plzeň"
+  },
+  "pravniForma": "112",
+  "datumVzniku": "2026-06-05",
+  "czNace": [
+    "68201",
+    "68310"
+  ],
+  "dic": "CZ29002524"
+}

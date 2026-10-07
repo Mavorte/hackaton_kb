@@ -1,0 +1,15 @@
+{
+  "ico": "29000912",
+  "obchodniJmeno": "Šumavská Právní služby a.s.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "Liberec",
+    "psc": 46001,
+    "textovaAdresa": "Polní 62, 46001 Liberec"
+  },
+  "pravniForma": "121",
+  "datumVzniku": "2026-01-01",
+  "czNace": [
+    "69101"
+  ]
+}

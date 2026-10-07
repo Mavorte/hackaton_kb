@@ -1,0 +1,16 @@
+{
+  "ico": "29001471",
+  "obchodniJmeno": "Modrý Gastro s.r.o.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "Praha",
+    "psc": 11000,
+    "textovaAdresa": "Pražská 70, 11000 Praha"
+  },
+  "pravniForma": "112",
+  "datumVzniku": "2011-04-25",
+  "czNace": [
+    "56101"
+  ],
+  "dic": "CZ29001471"
+}

@@ -1,0 +1,16 @@
+{
+  "ico": "29000009",
+  "obchodniJmeno": "Šumavská Stavby s.r.o.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "České Budějovice",
+    "psc": "37001",
+    "textovaAdresa": "Lipová 47, 37001 České Budějovice"
+  },
+  "pravniForma": "112",
+  "datumVzniku": "2025-12-07",
+  "czNace": [
+    "41200",
+    "43210"
+  ]
+}

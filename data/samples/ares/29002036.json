@@ -1,0 +1,17 @@
+{
+  "ico": "29002036",
+  "obchodniJmeno": "Polabské Konzulting v.o.s.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "Olomouc",
+    "psc": 77900,
+    "textovaAdresa": "Nádražní 116, 77900 Olomouc"
+  },
+  "pravniForma": "111",
+  "datumVzniku": "1998-04-04",
+  "czNace": [
+    "70220"
+  ],
+  "datumZaniku": "2002-05-26",
+  "dic": "CZ29002036"
+}

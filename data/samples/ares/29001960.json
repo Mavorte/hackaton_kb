@@ -1,0 +1,17 @@
+{
+  "ico": "29001960",
+  "obchodniJmeno": "Modrý Stavby v.o.s.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "České Budějovice",
+    "psc": "37001",
+    "textovaAdresa": "Dlouhá 3, 37001 České Budějovice"
+  },
+  "pravniForma": "111",
+  "datumVzniku": "2008-04-12",
+  "czNace": [
+    "41200",
+    "43210"
+  ],
+  "dic": "CZ29001960"
+}

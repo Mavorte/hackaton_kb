@@ -1,0 +1,15 @@
+{
+  "ico": "29001196",
+  "obchodniJmeno": "Slezská Konzulting s.r.o.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "Liberec",
+    "psc": "46001",
+    "textovaAdresa": "Polní 80, 46001 Liberec"
+  },
+  "pravniForma": "112",
+  "datumVzniku": "2002-08-07",
+  "czNace": [
+    "70220"
+  ]
+}

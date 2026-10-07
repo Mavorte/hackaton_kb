@@ -1,0 +1,16 @@
+{
+  "ico": "29001820",
+  "obchodniJmeno": "Modrý Obchod a.s.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "Ostrava",
+    "psc": "70200",
+    "textovaAdresa": "Dlouhá 10, 70200 Ostrava"
+  },
+  "pravniForma": "121",
+  "datumVzniku": "2026-01-24",
+  "czNace": [
+    "46900",
+    "47110"
+  ]
+}

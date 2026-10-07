@@ -1,0 +1,17 @@
+{
+  "ico": "29000564",
+  "obchodniJmeno": "Modrý Finance a.s.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "České Budějovice",
+    "psc": 37001,
+    "textovaAdresa": "Krátká 71, 37001 České Budějovice"
+  },
+  "pravniForma": "121",
+  "datumVzniku": "2026-01-21",
+  "czNace": [
+    "64190",
+    "66190"
+  ],
+  "dic": "CZ29000564"
+}

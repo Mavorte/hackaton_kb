@@ -1,0 +1,17 @@
+{
+  "ico": "29001129",
+  "obchodniJmeno": "Modrý Gastro, spol. s r.o.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "České Budějovice",
+    "psc": "37001",
+    "textovaAdresa": "Pražská 61, 37001 České Budějovice"
+  },
+  "pravniForma": "112",
+  "datumVzniku": "2010-06-24",
+  "czNace": [
+    "56101"
+  ],
+  "datumZaniku": "2011-11-20",
+  "dic": "CZ29001129"
+}

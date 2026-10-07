@@ -1,0 +1,17 @@
+{
+  "ico": "29002389",
+  "obchodniJmeno": "Orlická Obchod a.s.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "Plzeň",
+    "psc": "30100",
+    "textovaAdresa": "Polní 70, 30100 Plzeň"
+  },
+  "pravniForma": "121",
+  "datumVzniku": "2026-01-29",
+  "czNace": [
+    "46900",
+    "47110"
+  ],
+  "dic": "CZ29002389"
+}

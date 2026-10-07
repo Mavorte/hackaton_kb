@@ -1,0 +1,17 @@
+{
+  "ico": "29000076",
+  "obchodniJmeno": "Polabské Logistika s.r.o.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "Plzeň",
+    "psc": 30100,
+    "textovaAdresa": "Nádražní 74, 30100 Plzeň"
+  },
+  "pravniForma": "112",
+  "datumVzniku": "1996-10-04",
+  "czNace": [
+    "49410",
+    "52290"
+  ],
+  "dic": "CZ29000076"
+}

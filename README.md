@@ -63,6 +63,25 @@ Postgres: stacilo by zmenit `DATABASE_URL` a doinstalovat driver (psycopg).
 Zadej IČO (např. 28100034) nebo část názvu (např. Demo). Zobrazí kartu firmy, KYB posouzení
 (riziko, red flags) a kontrolu plátce DPH ve VIES. V postranním panelu je historie hledání.
 
+## Data pipeline, semantická vrstva, MCP a agent
+
+    python scripts/gen_samples.py                 # (jednou) 37 vygenerovaných firem k 3 ručním; už je v repu
+    OFFLINE=1 LLM_PROVIDER=mock python -m kb.ingest --samples
+    python -m kb.ingest 00006947                  # živý ARES (nebo vzorek při OFFLINE=1)
+
+Tok: `ares_raw` (surová odpověď + hash) → `companies_clean` (typy, normalizace názvů a adres, právní forma,
+CZ-NACE, věk, `quality_issues`) → `company_vectors` (embedding, klíč ico+model). Ingest je idempotentní,
+přepočítá jen změněné záznamy.
+
+- **Sémantická vrstva:** `src/kb/semantic_model.yaml` (dimenze, metriky, pojmenované filtry). `kb.semantic.query()`
+  z nich skládá SQL jen z povolených výrazů, hodnoty jdou jako parametry.
+- **Vektory:** `EMBED_MODEL_ID` (Titan v2) nebo mock (`LLM_PROVIDER=mock`, hash slov, jen lexikální podobnost).
+  Hledání = kosinová podobnost v numpy; pro řádově víc firem pgvector nebo OpenSearch.
+- **MCP server:** `python -m kb.mcp_server` (stdio). Nástroje: `describe_semantic_layer`, `query_metrics`,
+  `search_companies`, `get_company`, `ingest_company`. Jde připojit i do Claude Code nebo Desktopu.
+- **Agent:** `python -m kb.agent "Kolik je aktivních firem podle města?"`. Bedrock Converse tool-use smyčka, jejíž
+  nástroje jsou načtené z MCP serveru. S `LLM_PROVIDER=mock` rozhodují jednoduchá pravidla.
+
 ## Testy
 
     pytest

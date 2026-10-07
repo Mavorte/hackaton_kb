@@ -1,0 +1,17 @@
+{
+  "ico": "29002249",
+  "obchodniJmeno": "Polabské Reality s.r.o.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "Ostrava",
+    "psc": "70200",
+    "textovaAdresa": "Školní 26, 70200 Ostrava"
+  },
+  "pravniForma": "112",
+  "datumVzniku": "2002-02-06",
+  "czNace": [
+    "68201",
+    "68310"
+  ],
+  "dic": "CZ29002249"
+}

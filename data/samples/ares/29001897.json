@@ -1,0 +1,17 @@
+{
+  "ico": "29001897",
+  "obchodniJmeno": "Kvantum Stavby s.r.o.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "Liberec",
+    "psc": 46001,
+    "textovaAdresa": "Lipová 51, 46001 Liberec"
+  },
+  "pravniForma": "112",
+  "datumVzniku": "1999-08-08",
+  "czNace": [
+    "41200",
+    "43210"
+  ],
+  "dic": "CZ29001897"
+}

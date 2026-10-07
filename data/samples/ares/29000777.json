@@ -1,0 +1,17 @@
+{
+  "ico": "29000777",
+  "obchodniJmeno": "Orlická Finance  a. s.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "České Budějovice",
+    "psc": "37001",
+    "textovaAdresa": "Zahradní 57, 37001 České Budějovice"
+  },
+  "pravniForma": "121",
+  "datumVzniku": "2010-11-13",
+  "czNace": [
+    "64190",
+    "66190"
+  ],
+  "datumZaniku": "2012-09-18"
+}

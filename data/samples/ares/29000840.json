@@ -1,0 +1,15 @@
+{
+  "ico": "29000840",
+  "obchodniJmeno": "Nordic Právní služby v.o.s.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "Ostrava",
+    "psc": "70200",
+    "textovaAdresa": "Nádražní 10, 70200 Ostrava"
+  },
+  "pravniForma": "111",
+  "datumVzniku": "2026-03-05",
+  "czNace": [
+    "69101"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "ico": "29001404",
+  "obchodniJmeno": "Slezská Konzulting v.o.s.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "Ostrava",
+    "psc": 70200,
+    "textovaAdresa": "Lipová 68, 70200 Ostrava"
+  },
+  "pravniForma": "111",
+  "datumVzniku": "1995-01-26",
+  "czNace": [
+    "70220"
+  ],
+  "dic": "CZ29001404"
+}

@@ -1,0 +1,16 @@
+{
+  "ico": "29001617",
+  "obchodniJmeno": "Zelený Stavby a.s.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "Ostrava",
+    "psc": "70200",
+    "textovaAdresa": "Vinohradská 68, 70200 Ostrava"
+  },
+  "pravniForma": "121",
+  "datumVzniku": "1998-09-02",
+  "czNace": [
+    "41200",
+    "43210"
+  ]
+}

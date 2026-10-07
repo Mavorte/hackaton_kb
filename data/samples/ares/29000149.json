@@ -1,0 +1,17 @@
+{
+  "ico": "29000149",
+  "obchodniJmeno": "Orlická Stavby a.s.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "Olomouc",
+    "psc": 77900,
+    "textovaAdresa": "Pražská 72, 77900 Olomouc"
+  },
+  "pravniForma": "121",
+  "datumVzniku": "2026-07-09",
+  "czNace": [
+    "41200",
+    "43210"
+  ],
+  "dic": "CZ29000149"
+}

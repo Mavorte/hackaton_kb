@@ -1,0 +1,17 @@
+{
+  "ico": "29000700",
+  "obchodniJmeno": "Zelený Finance v.o.s.",
+  "sidlo": {
+    "kodStatu": "CZ",
+    "nazevObce": "Liberec",
+    "psc": "46001",
+    "textovaAdresa": "Nádražní 59, 46001 Liberec"
+  },
+  "pravniForma": "111",
+  "datumVzniku": "1999-12-28",
+  "czNace": [
+    "64190",
+    "66190"
+  ],
+  "dic": "CZ29000700"
+}

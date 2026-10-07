@@ -1,0 +1,65 @@
+# Semanticka vrstva nad tabulkou companies_clean.
+# Agent a MCP nastroje pracuji s TEMITO nazvy (ne s nazvy sloupcu ani SQL).
+entity: company
+table: companies_clean
+description: Ceske ekonomicke subjekty z ARES (vycistena data).
+
+dimensions:
+  legal_form:
+    sql: legal_form
+    description: Pravni forma (s.r.o., a.s., ...)
+    synonyms: [právní forma, typ společnosti]
+  city:
+    sql: city
+    description: Obec sídla
+    synonyms: [město, obec, sídlo]
+  nace_division_label:
+    sql: nace_division_label
+    description: Obor podnikání (CZ-NACE, dvouciferna uroven)
+    synonyms: [obor, odvětví, činnost]
+  founded_year:
+    sql: founded_year
+    description: Rok vzniku
+    synonyms: [rok založení, rok vzniku]
+  status:
+    sql: status
+    description: Stav subjektu (aktivní / zaniklá)
+    synonyms: [stav]
+  age_band:
+    sql: age_band
+    description: Věkové pásmo firmy (do 1 roku, 1-5 let, 5-15 let, 15+ let)
+    synonyms: [stáří, věk firmy]
+
+metrics:
+  company_count:
+    sql: COUNT(*)
+    description: Počet subjektů
+  active_count:
+    sql: SUM(CASE WHEN is_active THEN 1 ELSE 0 END)
+    description: Počet aktivních subjektů
+  dissolved_count:
+    sql: SUM(CASE WHEN is_active THEN 0 ELSE 1 END)
+    description: Počet zaniklých subjektů
+  dissolved_share_pct:
+    sql: ROUND(100.0 * SUM(CASE WHEN is_active THEN 0 ELSE 1 END) / COUNT(*), 1)
+    description: Podíl zaniklých subjektů v procentech
+  without_dic_count:
+    sql: SUM(CASE WHEN has_dic THEN 0 ELSE 1 END)
+    description: Počet subjektů bez DIČ
+  avg_age_years:
+    sql: ROUND(AVG(age_years), 1)
+    description: Průměrné stáří subjektů v letech
+
+filters:
+  active:
+    sql: is_active
+    description: Jen aktivní subjekty
+  dissolved:
+    sql: NOT is_active
+    description: Jen zaniklé subjekty
+  young:
+    sql: age_years < 1
+    description: Subjekty mladší než 1 rok
+  no_dic:
+    sql: NOT has_dic
+    description: Subjekty bez DIČ
