@@ -54,6 +54,15 @@ Postgres: stacilo by zmenit `DATABASE_URL` a doinstalovat driver (psycopg).
 - `OFFLINE=1`: ARES a VIES ctou smyslena data z `data/samples/ares/` (IČO 28100018, 28100026, 28100034).
   Jine IČO vraci 404. Data jsou syntetická, tvar odpovida dokumentaci ARES.
 
+## Streamlit UI (demo)
+
+    pip install -e ".[ui]"
+    streamlit run src/kb/ui.py                                   # ARES + Bedrock
+    LLM_PROVIDER=mock OFFLINE=1 streamlit run src/kb/ui.py       # bez AWS a bez site
+
+Zadej IČO (např. 28100034) nebo část názvu (např. Demo). Zobrazí kartu firmy, KYB posouzení
+(riziko, red flags) a kontrolu plátce DPH ve VIES. V postranním panelu je historie hledání.
+
 ## Testy
 
     pytest
