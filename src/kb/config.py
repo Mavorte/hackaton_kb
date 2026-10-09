@@ -18,6 +18,11 @@ class Settings(BaseSettings):
     samples_dir: str = "data/samples/ares"
     embed_model_id: str = "amazon.titan-embed-text-v2:0"
     embed_dim: int = 512
+    # underwriting: rychla cesta klasifikace z znalostni baze (kNN)
+    uw_kb_min_sim: float = 0.75
+    uw_kb_min_agree: float = 0.8
+    uw_kb_k: int = 5
+    uw_cases_dir: str = "data/uw"  # MCP smi cist pripady jen odtud
 
 
 @lru_cache

@@ -18,7 +18,8 @@ from kb.config import get_settings
 SYSTEM = (
     "Jsi analytik KYB v bance. Odpovidej cesky a stručně. K datum o firmach pouzivej POUZE dodane nastroje. "
     "Pro agregace nejdriv zavolej describe_semantic_layer a pak query_metrics; pro hledani podle vyznamu "
-    "search_companies; pro konkretni firmu get_company. Uvadej ICO. Pokud data chybi, rekni to - nic si nevymyslej."
+    "search_companies; pro konkretni firmu get_company. Pro underwritingove pripady (slozky dokumentu) "
+    "pouzij uw_get_case, uw_explain_rule, uw_rule_stats, uw_case_precedents a query_metrics s entity uw_rules / uw_docs. Uvadej ICO nebo id pripadu. Pokud data chybi, rekni to - nic si nevymyslej."
 )
 
 
@@ -32,6 +33,18 @@ def _text(result) -> str:
 
 def _mock_plan(q: str) -> tuple[str, dict]:
     ql = q.lower()
+    case = re.search(r"\b(?:eval[A-C]|seed|case)_\d{3}\b", q)
+    rule = re.search(r"\bR\d{2}_[a-z_]+\b", q)
+    if case and rule:
+        return "uw_explain_rule", {"case_id": case.group(), "rule_id": rule.group()}
+    if case:
+        return "uw_get_case", {"case_id": case.group()}
+    if rule:
+        return "uw_rule_stats", {"rule_id": rule.group()}
+    if ("pravidl" in ql or "kontrol" in ql) and any(w in ql for w in ("selh", "chyb", "nejčast", "nejcast")):
+        return "query_metrics", {"entity": "uw_rules", "metrics": ["fail_count", "rule_count", "fail_rate_pct"], "group_by": ["rule_id"], "filters": []}
+    if "dokument" in ql and any(w in ql for w in ("kolik", "počet", "pocet", "typ")):
+        return "query_metrics", {"entity": "uw_docs", "metrics": ["doc_count", "avg_confidence"], "group_by": ["doc_type"], "filters": []}
     m = re.search(r"\b\d{8}\b", q)
     if m:
         return "get_company", {"ico": m.group()}
@@ -49,6 +62,15 @@ def _mock_plan(q: str) -> tuple[str, dict]:
 
 
 def _mock_answer(tool: str, data) -> str:
+    if tool == "uw_get_case":
+        return "[MOCK]\n\n```\n" + data["report"] + "\n```" if "report" in data else f"[MOCK] {data.get('error')}"
+    if tool == "uw_explain_rule":
+        if "error" in data:
+            return f"[MOCK] {data['error']}"
+        ev = "\n".join(f"- {e['filename']}: {e['attribute']} = {e['value']!r} (strana {e['page']})" for e in data["evidence"])
+        return f"[MOCK] {data['rule_id']}: {data['outcome']}. {data['message']}\n\nDůkazy:\n{ev or '- žádné'}"
+    if tool == "uw_rule_stats":
+        return f"[MOCK] Pravidlo {data['rule_id']}: selhalo {data['fails']} z {data['cases']} případů ({data['fail_rate_pct']} %). " + "; ".join(data["example_messages"])
     if tool == "query_metrics":
         head = "| " + " | ".join(data["columns"]) + " |\n|" + "---|" * len(data["columns"])
         rows = ["| " + " | ".join(str(x) for x in row) + " |" for row in data["rows"]]

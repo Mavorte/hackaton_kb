@@ -168,6 +168,15 @@ class UwFeedback(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
+class UwCaseVector(Base):
+    __tablename__ = "uw_case_vectors"
+
+    case_id: Mapped[str] = mapped_column(String, primary_key=True)
+    model: Mapped[str] = mapped_column(String, primary_key=True)
+    dim: Mapped[int] = mapped_column(Integer)
+    vector: Mapped[bytes] = mapped_column(LargeBinary)
+
+
 @lru_cache
 def get_engine() -> Engine:
     url = get_settings().database_url

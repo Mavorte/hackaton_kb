@@ -92,7 +92,7 @@ def test_mcp_server_over_stdio(loaded):
             return names, res, bad
 
     names, res, bad = asyncio.run(run())
-    assert names == {"describe_semantic_layer", "query_metrics", "search_companies", "get_company", "ingest_company"}
+    assert {"describe_semantic_layer", "query_metrics", "search_companies", "get_company", "ingest_company"} <= names
     assert json.loads(res.content[0].text)["rows"] == [[40]]
     assert "Neplatné IČO" in bad.content[0].text
 

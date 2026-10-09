@@ -54,7 +54,7 @@ def test_agent_tab_answers_via_mcp(offline):
     ingest.ingest_samples()
     at = AppTest.from_file(APP, default_timeout=60).run()
     assert not at.exception
-    assert len(at.tabs) == 2
+    assert len(at.tabs) == 3
     at = at.chat_input[0].set_value("Kolik je firem podle právní formy?").run(timeout=60)
     assert not at.exception
     texts = [m.markdown[0].value for m in at.chat_message if m.markdown]

@@ -1,0 +1,48 @@
+# Semanticka vrstva: vysledky pravidel underwritingu (tabulka uw_rule_results)
+entity: uw_rules
+table: uw_rule_results
+description: Výsledky kontrolních pravidel nad underwritingovými případy (jeden řádek = pravidlo v jednom případu).
+
+dimensions:
+  rule_id:
+    sql: rule_id
+    description: Identifikátor pravidla (např. R04_cena)
+    synonyms: [pravidlo, kontrola]
+  rule_type:
+    sql: rule_type
+    description: Typ pravidla (consistency, presence, kyc, signatures)
+    synonyms: [typ pravidla, typ kontroly]
+  outcome:
+    sql: outcome
+    description: Výsledek (PASS, FAIL, NA)
+    synonyms: [výsledek]
+  product:
+    sql: product
+    description: Předmět financování (produkt)
+    synonyms: [produkt, předmět]
+  case_id:
+    sql: case_id
+    description: Identifikátor případu
+    synonyms: [případ]
+
+metrics:
+  rule_count:
+    sql: COUNT(*)
+    description: Počet vyhodnocení pravidel
+  fail_count:
+    sql: SUM(CASE WHEN is_fail THEN 1 ELSE 0 END)
+    description: Počet selhání
+  fail_rate_pct:
+    sql: ROUND(100.0 * SUM(CASE WHEN is_fail THEN 1 ELSE 0 END) / COUNT(*), 1)
+    description: Podíl selhání v procentech
+  case_count:
+    sql: COUNT(DISTINCT case_id)
+    description: Počet případů
+
+filters:
+  failed:
+    sql: is_fail
+    description: Jen selhaná pravidla
+  kyc_only:
+    sql: rule_type = 'kyc'
+    description: Jen KYC pravidla

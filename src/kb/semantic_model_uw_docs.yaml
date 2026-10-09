@@ -1,0 +1,47 @@
+# Semanticka vrstva: dokumenty underwritingu (tabulka uw_documents)
+entity: uw_docs
+table: uw_documents
+description: Zpracované dokumenty a jejich zařazení (jeden řádek = jeden PDF dokument).
+
+dimensions:
+  doc_type:
+    sql: doc_type
+    description: Typ dokumentu (smlouva_o_uveru, objednavka, ...)
+    synonyms: [typ dokumentu]
+  label_method:
+    sql: label_method
+    description: Jak byl typ určen (kb = ze znalostní báze, llm/mock = model, human = člověk)
+    synonyms: [metoda klasifikace]
+  label_source:
+    sql: label_source
+    description: Zdroj štítku (seed, human = ověřeno; auto = čeká na potvrzení)
+    synonyms: [zdroj štítku]
+  case_id:
+    sql: case_id
+    description: Případ
+    synonyms: [případ]
+
+metrics:
+  doc_count:
+    sql: COUNT(*)
+    description: Počet dokumentů
+  avg_confidence:
+    sql: ROUND(AVG(label_confidence), 3)
+    description: Průměrná jistota klasifikace
+  avg_signatures:
+    sql: ROUND(AVG(signatures), 2)
+    description: Průměrný počet podpisů na dokument
+  case_count:
+    sql: COUNT(DISTINCT case_id)
+    description: Počet případů
+
+filters:
+  verified:
+    sql: label_source IN ('seed', 'human')
+    description: Jen ověřené štítky (znalostní báze)
+  unverified:
+    sql: label_source = 'auto'
+    description: Strojové štítky čekající na potvrzení
+  via_kb:
+    sql: label_method = 'kb'
+    description: Zařazeno rychlou cestou ze znalostní báze

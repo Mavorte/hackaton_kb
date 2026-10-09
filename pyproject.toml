@@ -34,3 +34,4 @@ testpaths = ["tests"]
 
 [tool.setuptools.package-data]
 kb = ["*.yaml"]
+"kb.uw" = ["*.yaml"]

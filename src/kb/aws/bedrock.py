@@ -24,6 +24,7 @@ def ask(
     max_tokens: int = 1024,
     temperature: float | None = None,
     client=None,
+    images: list[bytes] | None = None,
 ) -> str:
     if get_settings().llm_provider == "mock" and client is None:
         return f"[MOCK] Odpoved bez volani modelu. Dotaz: {prompt[:80]}"
@@ -34,7 +35,10 @@ def ask(
         inference["temperature"] = temperature
     kwargs = {
         "modelId": model_id or get_settings().bedrock_model_id,
-        "messages": [{"role": "user", "content": [{"text": prompt}]}],
+        "messages": [{"role": "user", "content": [
+            *({"image": {"format": "png", "source": {"bytes": b}}} for b in (images or [])),
+            {"text": prompt},
+        ]}],
         "inferenceConfig": inference,
     }
     if system:

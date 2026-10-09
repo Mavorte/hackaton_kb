@@ -15,6 +15,7 @@ from kb.clients import vies
 from kb.clients.ares import Ares, Company, NotFound, valid_ico
 from kb.config import get_settings
 from kb.db import CompanyRow, get_engine, upsert_company
+from kb.uw.ui_tab import uw_tab
 
 RISK_LABEL = {"low": "Nízké riziko", "medium": "Střední riziko", "high": "Vysoké riziko"}
 RISK_BOX = {"low": st.success, "medium": st.warning, "high": st.error}
@@ -199,9 +200,11 @@ def main() -> None:
         f"Zdroj dat: {'ukázková (offline)' if s.offline else 'ARES'} · "
         f"LLM: {'mock' if s.llm_provider == 'mock' else s.bedrock_model_id}"
     )
-    tab_kyb, tab_agent = st.tabs(["KYB posouzení", "Agent (MCP)"])
+    tab_kyb, tab_uw, tab_agent = st.tabs(["KYB posouzení", "Underwriting případ", "Agent (MCP)"])
     with tab_kyb:
         _kyb_tab()
+    with tab_uw:
+        uw_tab()
     with tab_agent:
         _agent_tab()
     _history()

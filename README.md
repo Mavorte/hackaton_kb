@@ -84,6 +84,29 @@ přepočítá jen změněné záznamy.
 - **Agent:** `python -m kb.agent "Kolik je aktivních firem podle města?"`. Bedrock Converse tool-use smyčka, jejíž
   nástroje jsou načtené z MCP serveru. S `LLM_PROVIDER=mock` rozhodují jednoduchá pravidla.
 
+## Underwriting: dokumenty -> pravidla -> znalostní báze (back-office, track 06)
+
+Inspirováno PoV „AI for Customer Care“ (kontrola podkladů k úvěru). Všechna data jsou syntetická.
+
+    python -m kb.uw.gen --out data/uw                      # seed (styl A) + eval_a (A) + eval_b (B) + eval_c (těžká, styl C)
+    OFFLINE=1 LLM_PROVIDER=mock python -m kb.uw.evaluate data/uw/eval_a
+    python -m kb.uw.pipeline data/uw/eval_a/evalA_001      # report jednoho případu
+
+- **Konfigurace:** `src/kb/uw/taxonomy.yaml` (typy dokumentů, atributy, 11 pravidel: consistency, presence, kyc, signatures).
+- **Pipeline:** PDF → klasifikace (rychlá cesta kNN ze znalostní báze; jinak model s příklady z báze) → extrakce atributů
+  s důkazem (strana a citace; vizuální model čte obrázky stran, mock čte textovou vrstvu) → rules engine → report.
+- **Znalostní báze:** tabulky `uw_*` + vektory prvních stran. Hlasují jen ověřené štítky (seed/human); strojové štítky
+  (auto) čekají na potvrzení. Potvrzení v UI nebo `uw_record_feedback` přidá dokument mezi příklady.
+- **KYC pravidla:** IČO, název a stav firmy proti ARES (při OFFLINE=1 proti vzorku).
+- **Sémantická vrstva:** entity `uw_rules` a `uw_docs` (`semantic_model_uw_*.yaml`) pro `query_metrics`.
+- **MCP nástroje:** `uw_process_case`, `uw_get_case`, `uw_explain_rule`, `uw_find_similar_documents`, `uw_get_exemplars`,
+  `uw_case_precedents`, `uw_rule_stats`, `uw_record_feedback`. Zpracovat jde jen složky pod `UW_CASES_DIR`.
+- **Evaluace** proti `truth.json`: klasifikace, atributy, podpisy, pravidla, podíl rychlé cesty a kalibrace prahu (`UW_KB_MIN_SIM`).
+  Sada `eval_c` je záměrně těžká (jiná slovní zásoba, hodnoty na dalším řádku): mock tam selže, měří se na ní vizuální model.
+- **Skeny:** `gen.make_case(..., scan=True)` vyrobí PDF bez textové vrstvy; ty čte jen vizuální model (Bedrock), mock ne.
+
+Pozn.: vizuální cesta (`bedrock.ask(images=...)`) je zatím ověřená jen na falešném klientovi, účet blokuje volání modelů.
+
 ## Testy
 
     pytest

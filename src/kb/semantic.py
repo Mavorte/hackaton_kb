@@ -9,31 +9,36 @@ from sqlalchemy.engine import Engine
 from kb.db import get_engine
 
 
+ENTITIES = {"company": "semantic_model.yaml", "uw_rules": "semantic_model_uw_rules.yaml", "uw_docs": "semantic_model_uw_docs.yaml"}
+
+
 @lru_cache
-def model() -> dict:
-    return yaml.safe_load((Path(__file__).parent / "semantic_model.yaml").read_text(encoding="utf-8"))
+def model(entity: str = "company") -> dict:
+    if entity not in ENTITIES:
+        raise ValueError(f"Neznámá entita {entity!r}. Povolené: {list(ENTITIES)}")
+    return yaml.safe_load((Path(__file__).parent / ENTITIES[entity]).read_text(encoding="utf-8"))
 
 
-def describe() -> dict:
-    m = model()
+def describe(entity: str = "company") -> dict:
+    m = model(entity)
     pick = lambda section: {k: {"description": v["description"], **({"synonyms": v["synonyms"]} if "synonyms" in v else {})}
                             for k, v in m[section].items()}
     return {"entity": m["entity"], "description": m["description"], "dimensions": pick("dimensions"),
             "metrics": pick("metrics"), "filters": pick("filters")}
 
 
-def _check(names: list[str], section: str) -> None:
-    unknown = [n for n in names if n not in model()[section]]
+def _check(names: list[str], section: str, entity: str) -> None:
+    unknown = [n for n in names if n not in model(entity)[section]]
     if unknown:
-        raise ValueError(f"Neznámé {section}: {unknown}. Povolené: {list(model()[section])}")
+        raise ValueError(f"Neznámé {section}: {unknown}. Povolené: {list(model(entity)[section])}")
 
 
 def build_query(metrics: list[str], group_by: list[str] | None = None, filters: list[str] | None = None,
-                where: dict | None = None, limit: int = 50) -> tuple[str, dict]:
-    m, group_by, filters, where = model(), group_by or [], filters or [], where or {}
+                where: dict | None = None, limit: int = 50, entity: str = "company") -> tuple[str, dict]:
+    m, group_by, filters, where = model(entity), group_by or [], filters or [], where or {}
     if not metrics:
         raise ValueError("Zadej aspoň jednu metriku.")
-    _check(metrics, "metrics"); _check(group_by, "dimensions"); _check(filters, "filters"); _check(list(where), "dimensions")
+    _check(metrics, "metrics", entity); _check(group_by, "dimensions", entity); _check(filters, "filters", entity); _check(list(where), "dimensions", entity)
     dims = [f"{m['dimensions'][d]['sql']} AS {d}" for d in group_by]
     mets = [f"{m['metrics'][x]['sql']} AS {x}" for x in metrics]
     sql = f"SELECT {', '.join(dims + mets)} FROM {m['table']}"
@@ -55,8 +60,8 @@ def build_query(metrics: list[str], group_by: list[str] | None = None, filters: 
 
 
 def query(metrics: list[str], group_by: list[str] | None = None, filters: list[str] | None = None,
-          where: dict | None = None, limit: int = 50, engine: Engine | None = None) -> dict:
-    sql, params = build_query(metrics, group_by, filters, where, limit)
+          where: dict | None = None, limit: int = 50, engine: Engine | None = None, entity: str = "company") -> dict:
+    sql, params = build_query(metrics, group_by, filters, where, limit, entity)
     with (engine or get_engine()).connect() as conn:
         res = conn.execute(text(sql), params)
         return {"sql": sql, "columns": list(res.keys()), "rows": [list(r) for r in res.fetchall()]}
