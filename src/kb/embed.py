@@ -13,8 +13,13 @@ MOCK_DIM = 256
 MOCK_MODEL = f"mock-hash-{MOCK_DIM}"
 
 
+def _mock() -> bool:
+    s = get_settings()
+    return (s.embed_provider or s.llm_provider) == "mock"
+
+
 def model_name() -> str:
-    return MOCK_MODEL if get_settings().llm_provider == "mock" else get_settings().embed_model_id
+    return MOCK_MODEL if _mock() else get_settings().embed_model_id
 
 
 def _mock_vec(text: str) -> np.ndarray:
@@ -33,7 +38,7 @@ def _mock_vec(text: str) -> np.ndarray:
 def embed_texts(texts: list[str]) -> np.ndarray:
     """Vrati matici (n, dim) float32 s L2-normalizovanymi radky."""
     s = get_settings()
-    if s.llm_provider == "mock":
+    if _mock():
         return np.vstack([_mock_vec(t) for t in texts]) if texts else np.zeros((0, MOCK_DIM), np.float32)
     client = bedrock.runtime_client()
     out = []

@@ -88,7 +88,7 @@ přepočítá jen změněné záznamy.
 
 Inspirováno PoV „AI for Customer Care“ (kontrola podkladů k úvěru). Všechna data jsou syntetická.
 
-    python -m kb.uw.gen --out data/uw                      # seed (styl A) + eval_a (A) + eval_b (B) + eval_c (těžká, styl C)
+    python -m kb.uw.gen --out data/uw                      # seed (styl A) + eval_a (A) + eval_b (B) + eval_c (těžká, styl C) + eval_d (skeny, část sloučená)
     OFFLINE=1 LLM_PROVIDER=mock python -m kb.uw.evaluate data/uw/eval_a
     python -m kb.uw.pipeline data/uw/eval_a/evalA_001      # report jednoho případu
 
@@ -103,9 +103,15 @@ Inspirováno PoV „AI for Customer Care“ (kontrola podkladů k úvěru). Vše
   `uw_case_precedents`, `uw_rule_stats`, `uw_record_feedback`. Zpracovat jde jen složky pod `UW_CASES_DIR`.
 - **Evaluace** proti `truth.json`: klasifikace, atributy, podpisy, pravidla, podíl rychlé cesty a kalibrace prahu (`UW_KB_MIN_SIM`).
   Sada `eval_c` je záměrně těžká (jiná slovní zásoba, hodnoty na dalším řádku): mock tam selže, měří se na ní vizuální model.
-- **Skeny:** `gen.make_case(..., scan=True)` vyrobí PDF bez textové vrstvy; ty čte jen vizuální model (Bedrock), mock ne.
+- **Skeny (vizuální cesta, bez OCR):** `gen.make_case(..., scan=True, merge=True)` vyrobí PDF bez textové vrstvy (volitelně se dvěma
+  dokumenty v jednom souboru). Tok: levný model přepíše hlavičku (z ní se počítá vektor pro kNN) → segmentace stran na dokumenty →
+  klasifikace (kNN z báze, jinak model s obrázky) → extrakce z obrázků s **eskalací modelu** (Haiku → Sonnet → Opus při nízké
+  jistotě, neplatném IČO, nečitelné ceně, chybějících atributech). Modely a rozlišení jsou v `UW_MODEL_FAST/STRONG/HARD`,
+  `UW_SCAN_DPI`, `UW_ESCALATE_DPI`. Náklady (tokeny a orientační USD) hlásí `process_case()["cost"]` a `evaluate`.
+  Sada `eval_d` jsou skeny se sloučenými dokumenty. Mock skeny nečte, tam rozhoduje jen skutečný model.
 
-Pozn.: vizuální cesta (`bedrock.ask(images=...)`) je zatím ověřená jen na falešném klientovi, účet blokuje volání modelů.
+Pozn.: vizuální cesta je ověřená jen na falešném modelu (`tests/test_uw_visual.py`), účet zatím blokuje volání modelů. Jedno technické
+shrnutí na stránku: `docs/technicka-flow.html` (PDF: `docs/technicka-flow.pdf`).
 
 ## Testy
 

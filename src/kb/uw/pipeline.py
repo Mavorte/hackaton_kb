@@ -17,7 +17,8 @@ from kb.config import get_settings
 from kb.db import UwAttribute, UwCase, UwCaseVector, UwDocument, UwRuleResult, UwVector, get_engine
 from kb.uw import classify as cls
 from kb.uw import extract as ext
-from kb.uw import kbase
+from kb.uw import kbase, visual
+from kb.uw.prices import estimate_cost
 from kb.uw.docio import read_pdf
 from kb.uw.report import build_report
 from kb.uw.rules import run_rules
@@ -40,44 +41,70 @@ def _judge(ask_json):
     return judge
 
 
-def process_case(case_dir: str | Path, engine: Engine | None = None, seed_labels: dict[str, str] | None = None,
+def _segments(doc, ask_json, scan: bool) -> list[tuple[int, int]]:
+    """Vice dokumentu v jednom souboru: sken -> vizualni segmentace (levny model); born-digital -> zdarma podle nadpisu stran."""
+    if doc.page_count < 2:
+        return [(0, doc.page_count)]
+    if get_settings().llm_provider == "mock" or ask_json is None:
+        return visual.text_segments(doc) if doc.has_text_layer else [(0, doc.page_count)]
+    return visual.segment_pages(doc, ask_json) if scan else visual.text_segments(doc)
+
+
+def _seed_label(v, idx: int) -> str:
+    return v[idx] if isinstance(v, list) else v
+
+
+def process_case(case_dir: str | Path, engine: Engine | None = None, seed_labels: dict | None = None,
                  learn: bool = False, ask_json=bedrock.ask_json, ares=None) -> dict:
-    """seed_labels: {nazev_souboru: doc_type} -> dokumenty se ulozi jako overene (seed) a ucí znalostni bazi.
-    learn=True: automaticky stitky se ukladaji jako 'auto' (necekaji do hlasovani, dokud je clovek nepotvrdi)."""
+    """seed_labels: {nazev_souboru: doc_type | [doc_type, ...]} -> dokumenty se ulozi jako overene (seed) a uci znalostni bazi.
+    Automaticke stitky se ukladaji jako 'auto' (nehlasuji, dokud je clovek nepotvrdi)."""
     case_dir = Path(case_dir)
     engine = engine or get_engine()
     case_id = case_dir.name
+    cfg = get_settings()
+    real = cfg.llm_provider != "mock" and ask_json is not None
+    bedrock.meter.reset()
     pdfs = sorted(case_dir.glob("*.pdf"), key=lambda p: p.name.lower())
     docs_out: list[dict] = []
 
     with Session(engine) as s:
         keep = kbase.clear_case(case_id, s)
         for pdf in pdfs:
-            doc = read_pdf(pdf)
-            vec = embed.embed_texts([doc.first_page_text[:2000] or pdf.stem])[0]
-            if seed_labels and pdf.name in seed_labels:
-                c = cls.Classification(seed_labels[pdf.name], 1.0, "truth", [], "seed ze znamého stítku")
-                source = "seed"
-            elif pdf.name in keep:
-                c = cls.Classification(keep[pdf.name][0], 1.0, "human", [], "ověřený štítek z dřívějška")
-                source = keep[pdf.name][1]
-            else:
-                images = doc.page_images(max_pages=2) if not doc.has_text_layer and get_settings().llm_provider != "mock" else None
-                c = cls.classify(doc.first_page_text, vec, images, exclude_case=case_id, engine=engine, ask_json=ask_json)
-                source = "auto"
-            attrs, sigs = ext.extract(c.doc_type, doc, ask_json) if c.doc_type else ({}, doc.signatures)
+            full = read_pdf(pdf)
+            scan = not full.has_text_layer
+            segs = _segments(full, ask_json, scan)
+            for si, (a, b) in enumerate(segs):
+                doc = full if len(segs) == 1 else full.sub(a, b)
+                name = pdf.name if len(segs) == 1 else f"{pdf.name}[s{a + 1}-{b}]"
+                seg_scan = not doc.has_text_layer
+                images, text = None, doc.first_page_text
+                if seg_scan and real:
+                    hdr = visual.transcribe_header(doc, ask_json)  # sken: hlavicku precte levny model, z ni se pocita vektor pro kNN
+                    text = hdr["header_text"] or hdr["title"]
+                    images = doc.page_images(cfg.uw_scan_dpi, max_pages=2, autocontrast=True)
+                vec = embed.embed_texts([text[:2000] or pdf.stem])[0]
+                if seed_labels and pdf.name in seed_labels:
+                    c = cls.Classification(_seed_label(seed_labels[pdf.name], si), 1.0, "truth", [], "seed ze znamého štítku")
+                    source = "seed"
+                elif name in keep:
+                    c = cls.Classification(keep[name][0], 1.0, "human", [], "ověřený štítek z dřívějška")
+                    source = keep[name][1]
+                else:
+                    c = cls.classify(text, vec, images, exclude_case=case_id, engine=engine, ask_json=ask_json)
+                    source = "auto"
+                attrs, sigs, esc = ext.extract_ex(c.doc_type, doc, ask_json) if c.doc_type else ({}, doc.signatures, [])
 
-            row = UwDocument(case_id=case_id, filename=pdf.name, page_count=doc.page_count, doc_type=c.doc_type, label_source=source,
-                             label_method=c.method, label_confidence=c.confidence, first_page_text=doc.first_page_text[:3000], signatures=sigs)
-            s.add(row)
-            s.flush()
-            s.add(UwVector(doc_id=row.doc_id, model=embed.model_name(), dim=len(vec), vector=_vec_bytes(vec)))
-            for a, v in attrs.items():
-                s.add(UwAttribute(case_id=case_id, doc_id=row.doc_id, doc_type=c.doc_type, attribute=a, value=str(v["value"]),
-                                  page=v.get("page"), quote=v.get("quote"), confidence=v.get("confidence")))
-            docs_out.append({"doc_id": row.doc_id, "filename": pdf.name, "doc_type": c.doc_type, "label_method": c.method,
-                             "label_source": source, "confidence": c.confidence, "neighbors": c.neighbors, "reason": c.reason,
-                             "attrs": attrs, "signatures": sigs, "pages": doc.page_count})
+                row = UwDocument(case_id=case_id, filename=name, page_count=doc.page_count, doc_type=c.doc_type, label_source=source,
+                                 label_method=c.method, label_confidence=c.confidence, first_page_text=text[:3000], signatures=sigs)
+                s.add(row)
+                s.flush()
+                s.add(UwVector(doc_id=row.doc_id, model=embed.model_name(), dim=len(vec), vector=_vec_bytes(vec)))
+                for at, v in attrs.items():
+                    s.add(UwAttribute(case_id=case_id, doc_id=row.doc_id, doc_type=c.doc_type, attribute=at, value=str(v["value"]),
+                                      page=v.get("page"), quote=v.get("quote"), confidence=v.get("confidence")))
+                docs_out.append({"doc_id": row.doc_id, "filename": name, "doc_type": c.doc_type, "label_method": c.method,
+                                 "label_source": source, "confidence": c.confidence, "neighbors": c.neighbors, "reason": c.reason,
+                                 "attrs": attrs, "signatures": sigs, "pages": doc.page_count, "scan": seg_scan, "escalations": esc})
 
         results = run_rules(docs_out, ares, _judge(ask_json))
         icos = [d["attrs"]["NAJEMCE__ICO"]["value"] for d in docs_out if "NAJEMCE__ICO" in d["attrs"]]
@@ -94,8 +121,9 @@ def process_case(case_dir: str | Path, engine: Engine | None = None, seed_labels
                                is_fail=r.outcome == "FAIL", message=r.message, details=r.details))
         s.commit()
 
+    usage = bedrock.meter.snapshot()
     result = {"case_id": case_id, "product": product, "company_ico": company_ico, "documents": docs_out,
-              "rules": [r.__dict__ for r in results], "failed_rules": failed}
+              "rules": [r.__dict__ for r in results], "failed_rules": failed, "usage": usage, "cost": estimate_cost(usage)}
     result["report"] = build_report(result)
     return result
 

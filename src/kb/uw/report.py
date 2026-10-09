@@ -21,5 +21,8 @@ def build_report(res: dict) -> str:
     ok = sum(v[0] for v in by.values())
     tot = sum(v[1] for v in by.values())
     lines += ["", "Úspěšnost kontrol: " + ", ".join(f"{k}: {v[0]}/{v[1]}" for k, v in by.items()) + f"  | celkem {ok}/{tot}"]
+    if res.get("usage"):
+        calls = sum(u["calls"] for u in res["usage"].values())
+        lines.append(f"Náklady na zpracování: ≈ {res['cost']['usd']:.3f} USD ({calls} volání modelu; listové ceny, orientačně)")
     lines.append("Závěr: " + ("bez nálezů" if not res["failed_rules"] else "k ručnímu posouzení - " + ", ".join(res["failed_rules"])))
     return "\n".join(lines)

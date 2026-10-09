@@ -7,6 +7,28 @@ import boto3
 from kb.config import get_settings
 
 
+class UsageMeter:
+    """Pocita tokeny podle modelu (ze zpetne vazby Converse), aby slo vycislit naklady na pripad."""
+
+    def __init__(self) -> None:
+        self.by_model: dict[str, dict[str, int]] = {}
+
+    def reset(self) -> None:
+        self.by_model = {}
+
+    def add(self, model: str, usage: dict) -> None:
+        m = self.by_model.setdefault(model, {"input": 0, "output": 0, "calls": 0})
+        m["input"] += int(usage.get("inputTokens", 0))
+        m["output"] += int(usage.get("outputTokens", 0))
+        m["calls"] += 1
+
+    def snapshot(self) -> dict:
+        return {k: dict(v) for k, v in self.by_model.items()}
+
+
+meter = UsageMeter()
+
+
 def session() -> boto3.Session:
     s = get_settings()
     # prazdny AWS_PROFILE z .env nesmi prebit default chain
@@ -44,6 +66,7 @@ def ask(
     if system:
         kwargs["system"] = [{"text": system}]
     out = client.converse(**kwargs)
+    meter.add(kwargs["modelId"], out.get("usage", {}))
     blocks = out["output"]["message"]["content"]
     return "".join(b["text"] for b in blocks if "text" in b)
 

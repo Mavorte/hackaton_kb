@@ -133,16 +133,17 @@ def test_safe_case_dir_blocks_path_traversal(env):
         queries.safe_case_dir(str(env / ".." / ".."))
 
 
-def test_llm_extract_request_shape_with_fake_model(corpus):
-    """Vizualni cesta (bez AWS): model dostane obrazky stran a definici jen atributu daneho typu."""
+def test_llm_extract_text_layer_sends_text_not_images(corpus):
+    """Born-digital PDF: LLM dostane text (levne), ne obrazky; podpisy zustavaji z vektoru. Atributy jen pro dany typ dokumentu."""
     from kb.uw import extract
 
     seen = {}
 
     def fake(prompt, **kw):
         seen.update(kw, prompt=prompt)
-        return {"attributes": {"NAJEMCE__Nazev": {"value": "X s.r.o.", "page": 1, "quote": "Nájemce: X s.r.o.", "confidence": 0.9},
-                               "NEEXISTUJE": {"value": "zahodit"}}, "signatures": 2}
+        return {"attributes": {"NAJEMCE__Nazev": {"value": "X s.r.o.", "page": 1, "quote": "Převzal: X s.r.o.", "confidence": 0.95},
+                               "PREDMET__Nazev": {"value": "Stroj", "page": 1, "quote": "Předmět: Stroj", "confidence": 0.95},
+                               "NEEXISTUJE": {"value": "zahodit"}}}
 
     pdf = next((corpus / "eval_a").glob("*/*.pdf"))
     get_settings().llm_provider = "bedrock"
@@ -150,9 +151,8 @@ def test_llm_extract_request_shape_with_fake_model(corpus):
         attrs, sigs = extract.extract("predavaci_protokol", read_pdf(pdf), fake)
     finally:
         get_settings.cache_clear()
-    assert set(attrs) == {"NAJEMCE__Nazev"} and sigs == 2
-    assert seen["images"] and isinstance(seen["images"][0], bytes)
-    assert "PREDMET__Nazev" in seen["prompt"] and "CENA" not in seen["prompt"]
+    assert set(attrs) == {"NAJEMCE__Nazev", "PREDMET__Nazev"} and "images" not in seen
+    assert "[strana 1]" in seen["prompt"] and "CENA" not in seen["prompt"]
 
 
 def test_bedrock_ask_builds_image_blocks():

@@ -37,7 +37,7 @@ def keyword_classify(text: str) -> tuple[str | None, float]:
     return (best, min(0.95, 0.4 + 0.1 * best_score)) if best else (None, 0.0)
 
 
-def _llm_classify(text: str, images: list[bytes] | None, nb: list[dict], ask_json=bedrock.ask_json) -> Classification:
+def _llm_classify(text: str, images: list[bytes] | None, nb: list[dict], ask_json=bedrock.ask_json, model_id: str | None = None) -> Classification:
     types = "\n".join(f"- {k}: {v['description']}" for k, v in taxonomy.doc_types().items())
     shots = ""
     for n in nb[:3]:
@@ -45,6 +45,8 @@ def _llm_classify(text: str, images: list[bytes] | None, nb: list[dict], ask_jso
     prompt = (f"Zařaď dokument do jednoho z typů.\nTypy:\n{types}\n{shots}\n\nText první strany:\n{text[:2500] or '(bez textové vrstvy, viz obrázek)'}\n\n"
               'Odpověz JSON: {"doc_type": "<klíč typu>", "confidence": 0-1, "reason": "<krátce>"}')
     kw = {"images": images} if images else {}
+    if model_id:
+        kw["model_id"] = model_id
     out = ask_json(prompt, system="Jsi klasifikátor dokumentů banky. Vyber jen z uvedených typů.", **kw)
     dt = out.get("doc_type")
     if dt not in taxonomy.doc_types():
@@ -59,4 +61,6 @@ def classify(text: str, vec: np.ndarray, images=None, exclude_case: str | None =
     if get_settings().llm_provider == "mock":
         dt, conf = keyword_classify(text)
         return Classification(dt, conf, "mock" if dt else "none", nb, "klíčová slova z taxonomie")
-    return _llm_classify(text, images, nb, ask_json)
+    s = get_settings()
+    c = _llm_classify(text, images, nb, ask_json, s.uw_model_strong if images else None)
+    return c

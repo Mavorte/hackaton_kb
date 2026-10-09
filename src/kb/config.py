@@ -23,6 +23,14 @@ class Settings(BaseSettings):
     uw_kb_min_agree: float = 0.8
     uw_kb_k: int = 5
     uw_cases_dir: str = "data/uw"  # MCP smi cist pripady jen odtud
+    # vizualni cesta (skeny): levny model na hlavicku/segmentaci/prvni pokus, silnejsi na eskalaci
+    uw_model_fast: str = "eu.anthropic.claude-haiku-5-5"
+    uw_model_strong: str = "eu.anthropic.claude-sonnet-5-5"
+    uw_model_hard: str = "eu.anthropic.claude-opus-5-5"
+    uw_scan_dpi: int = 110
+    uw_escalate_dpi: int = 160
+    uw_min_conf: float = 0.75
+    embed_provider: str = ""  # prazdne = podle llm_provider; "mock" vynuti mock embeddingy
 
 
 @lru_cache

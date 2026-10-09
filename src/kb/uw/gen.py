@@ -241,8 +241,22 @@ def expected_rules(defects: list[str], present: set[str]) -> dict[str, str]:
     return r
 
 
+MERGE_TYPES = ("predavaci_protokol", "platebni_kalendar")
+
+
+def _merge_pdfs(paths: list[Path], target: Path) -> None:
+    import pymupdf
+
+    out = pymupdf.open()
+    for p in paths:
+        with pymupdf.open(p) as d:
+            out.insert_pdf(d)
+    out.save(target)
+    out.close()
+
+
 def make_case(out_dir: Path, case_id: str, company: dict, rng: random.Random, style: str = "A", defects: list[str] | None = None,
-              scan: bool = False) -> dict:
+              scan: bool = False, merge: bool = False) -> dict:
     defects = defects or []
     if "unknown_ico" in defects:
         company = _unknown_company(rng)
@@ -287,11 +301,24 @@ def make_case(out_dir: Path, case_id: str, company: dict, rng: random.Random, st
             fname = f"{rng.randint(1, 9)}_{fname}"
         body = [b.format(date=handover) for b in BODY[dt]]
         _render_pdf(case_dir / fname, TITLES[style][dt], fields, body, sigs, rng, pages=2 if dt == "vop" else 1, wrap=style == "C")
-        if scan:
+        if scan and not (merge and dt in MERGE_TYPES):
             scanify(case_dir / fname, rng)
         truth_files[fname], truth_attrs[fname], truth_sigs[fname] = dt, attrs, sigs
 
-    truth = {"case_id": case_id, "style": style, "scan": scan, "product": product, "company_ico": company["ico"],
+    if merge and all(any(t == m for t in truth_files.values()) for m in MERGE_TYPES):
+        # dva dokumenty v jednom souboru (PoV: "two document types scanned into a single file")
+        parts = [next(f for f, t in truth_files.items() if t == m) for m in MERGE_TYPES]
+        merged = f"sken_{rng.randint(100, 999)}.pdf"
+        _merge_pdfs([case_dir / f for f in parts], case_dir / merged)
+        for f in parts:
+            (case_dir / f).unlink()
+        truth_files[merged] = [truth_files.pop(f) for f in parts]
+        truth_attrs[merged] = {k: v for f in parts for k, v in truth_attrs.pop(f).items()}
+        truth_sigs[merged] = sum(truth_sigs.pop(f) for f in parts)
+        if scan:
+            scanify(case_dir / merged, rng)
+
+    truth = {"case_id": case_id, "style": style, "scan": scan, "merged": merge, "product": product, "company_ico": company["ico"],
              "defects": defects, "files": truth_files, "attributes": truth_attrs, "signatures": truth_sigs,
              "expected_rules": expected_rules(defects, set(doc_types))}
     (case_dir / "truth.json").write_text(json.dumps(truth, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -299,7 +326,7 @@ def make_case(out_dir: Path, case_id: str, company: dict, rng: random.Random, st
 
 
 def make_corpus(out_dir: str | Path, n: int, style: str = "A", seed: int = 1, defect_rate: float = 0.6, scan: bool = False,
-                prefix: str = "case") -> list[dict]:
+                prefix: str = "case", merge_rate: float = 0.0) -> list[dict]:
     rng = random.Random(seed)
     out_dir = Path(out_dir)
     companies = load_companies()
@@ -313,7 +340,7 @@ def make_corpus(out_dir: str | Path, n: int, style: str = "A", seed: int = 1, de
             if rng.random() < 0.15:
                 defects.append(rng.choice([d for d in DEFECTS if d not in defects and d not in ("missing_doc", "unknown_ico", "dissolved")]))
         pool = dissolved if "dissolved" in defects else active
-        cases.append(make_case(out_dir, f"{prefix}_{i + 1:03d}", rng.choice(pool), rng, style, defects, scan))
+        cases.append(make_case(out_dir, f"{prefix}_{i + 1:03d}", rng.choice(pool), rng, style, defects, scan, rng.random() < merge_rate))
     return cases
 
 
@@ -330,7 +357,8 @@ def main() -> None:
     make_corpus(out / "eval_a", a.n_eval, "A", a.seed + 1, prefix="evalA")
     make_corpus(out / "eval_b", a.n_eval, "B", a.seed + 2, prefix="evalB")
     make_corpus(out / "eval_c", a.n_hard, "C", a.seed + 3, prefix="evalC")
-    print(f"Vygenerovano v {out}: seed {a.n_seed} (styl A), eval_a {a.n_eval} (A), eval_b {a.n_eval} (B), eval_c {a.n_hard} (C, těžká)")
+    make_corpus(out / "eval_d", a.n_hard, "A", a.seed + 4, scan=True, merge_rate=0.5, prefix="evalD")
+    print(f"Vygenerovano v {out}: seed {a.n_seed} (styl A), eval_a {a.n_eval} (A), eval_b {a.n_eval} (B), eval_c {a.n_hard} (C, těžká), eval_d {a.n_hard} (skeny, část se sloučenými dokumenty)")
 
 
 if __name__ == "__main__":

@@ -24,28 +24,38 @@ def evaluate(cases_dir: str | Path, engine=None, ask_json=bedrock.ask_json, ares
     for cdir in cases:
         truth = json.loads((cdir / "truth.json").read_text(encoding="utf-8"))
         res = pipeline.process_case(cdir, engine, ask_json=ask_json, ares=ares)
-        got = {d["filename"]: d for d in res["documents"]}
+        m["usd"] = m.get("usd", 0.0) + res["cost"]["usd"]
+        by_base: dict[str, list[dict]] = {}
+        for d in res["documents"]:
+            by_base.setdefault(d["filename"].split("[")[0], []).append(d)  # segment "soubor.pdf[s2-3]" patri k souboru
         for fname, dt in truth["files"].items():
-            d = got.get(fname)
-            m["docs"] += 1
-            ok = bool(d and d["doc_type"] == dt)
-            m["doc_ok"] += ok
-            meth = (d or {}).get("label_method", "none")
-            bm = m["by_method"].setdefault(meth, [0, 0])
-            bm[0] += ok
-            bm[1] += 1
-            if d and d["neighbors"]:
-                m["sims"].append((d["neighbors"][0]["similarity"], d["neighbors"][0]["doc_type"] == dt))
-            if not ok:
-                errors.append(f"{truth['case_id']}/{fname}: {dt} -> {d['doc_type'] if d else None}")
-            if not d:
-                continue
+            exp = dt if isinstance(dt, list) else [dt]
+            ds = by_base.get(fname, [])
+            pred = [d["doc_type"] for d in ds]
+            m["docs"] += len(exp)
+            same = sum(min(pred.count(t), exp.count(t)) for t in set(exp))
+            m["doc_ok"] += same
+            for d in ds:
+                ok = d["doc_type"] in exp
+                bm = m["by_method"].setdefault(d["label_method"], [0, 0])
+                bm[0] += ok
+                bm[1] += 1
+                if d["neighbors"]:
+                    m["sims"].append((d["neighbors"][0]["similarity"], ok))
+            if not ds:
+                m["by_method"].setdefault("none", [0, 0])[1] += len(exp)
+            if sorted(map(str, pred)) != sorted(exp):
+                errors.append(f"{truth['case_id']}/{fname}: {exp} -> {pred}")
+            got_attrs: dict[str, str] = {}
+            for d in ds:
+                for k, v in d["attrs"].items():
+                    got_attrs.setdefault(k, v["value"])
             for attr, tv in truth["attributes"][fname].items():
                 m["attr"] += 1
-                gv = d["attrs"].get(attr, {}).get("value")
+                gv = got_attrs.get(attr)
                 m["attr_ok"] += bool(gv is not None and equal(taxonomy.attributes()[attr]["compare"], tv, gv))
             m["sig"] += 1
-            m["sig_ok"] += d["signatures"] == truth["signatures"][fname]
+            m["sig_ok"] += sum(d["signatures"] for d in ds) == truth["signatures"][fname]
         out = {r["rule_id"]: r["outcome"] for r in res["rules"]}
         for rid, exp in truth["expected_rules"].items():
             m["rules"] += 1
@@ -58,6 +68,7 @@ def evaluate(cases_dir: str | Path, engine=None, ask_json=bedrock.ask_json, ares
             dd[0] += hit
             dd[1] += 1
     kb = m["by_method"].get("kb", [0, 0])
+    m["usd_per_case"] = round(m.get("usd", 0.0) / len(cases), 4) if cases else None
     m["summary"] = {"doc_class_pct": _pct(m["doc_ok"], m["docs"]), "attr_pct": _pct(m["attr_ok"], m["attr"]),
                     "sig_pct": _pct(m["sig_ok"], m["sig"]), "rules_pct": _pct(m["rules_ok"], m["rules"]),
                     "kb_fast_path_pct": _pct(kb[1], m["docs"]), "kb_accuracy_pct": _pct(kb[0], kb[1])}
@@ -76,6 +87,8 @@ def format_table(name: str, m: dict) -> str:
              f"  Klasifikace dokumentů {s['doc_class_pct']} %  | Atributy {s['attr_pct']} %  | Podpisy {s['sig_pct']} %  | Pravidla {s['rules_pct']} %",
              f"  Rychlá cesta z báze: {s['kb_fast_path_pct']} % dokumentů (přesnost {s['kb_accuracy_pct']} %)",
              "  Metoda klasifikace: " + ", ".join(f"{k} {v[0]}/{v[1]}" for k, v in m["by_method"].items())]
+    if m.get("usd"):
+        lines.append(f"  Náklady: ≈ {m['usd_per_case']} USD na případ (listové ceny, orientačně)")
     if m["defect"]:
         lines.append("  Odhalení chyb: " + ", ".join(f"{k} {v[0]}/{v[1]}" for k, v in sorted(m["defect"].items())))
     return "\n".join(lines)

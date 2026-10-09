@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<title>Underwriting asistent – technická flow</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  @page { size: A4 landscape; margin: 0; }
+  :root {
+    --bg: #ffffff; --ink: #14181f; --muted: #5a6472; --line: #d5dbe3; --panel: #f4f6f9;
+    --brand: #0b5cad; --brand-soft: #e3effb; --ok: #1b7a43; --ok-soft: #e4f4ea; --warn: #9a5a00; --warn-soft: #fdf0dc;
+    --llm: #6a2fb8; --llm-soft: #efe6fb;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #11151b; --ink: #e8ecf2; --muted: #9aa5b4; --line: #2b3441; --panel: #19202a; --brand: #6db1f5; --brand-soft: #172a40;
+    --ok: #6fcf97; --ok-soft: #14301f; --warn: #f0b35a; --warn-soft: #3a2a10; --llm: #b79af0; --llm-soft: #2a2140; } }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 8.4pt/1.28 "Segoe UI", system-ui, -apple-system, Arial, sans-serif; }
+  .page { width: 297mm; height: 210mm; padding: 6.5mm 9mm 4.5mm; display: flex; flex-direction: column; gap: 2.8mm; overflow: hidden; }
+  @media screen { .page { margin: 0 auto; } body { background: #e9edf2; } .page { background: var(--bg); } }
+  header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid var(--brand); padding-bottom: 2mm; }
+  h1 { font-size: 15pt; margin: 0; white-space: nowrap; }
+  header .sub { color: var(--muted); font-size: 7.8pt; text-align: right; }
+  h2 { font-size: 8.3pt; text-transform: uppercase; letter-spacing: .6px; color: var(--brand); margin: 0 0 1.2mm; }
+  .flow { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2.8mm; position: relative; }
+  .step { background: var(--panel); border: 1px solid var(--line); border-radius: 3px; padding: 2mm 2.1mm; position: relative; }
+  .step:not(:last-child)::after { content: "▶"; position: absolute; right: -3.1mm; top: 50%; transform: translateY(-50%); font-size: 7pt; color: var(--brand); z-index: 2; }
+  .num { display: inline-block; background: var(--brand); color: #fff; font-weight: 700; border-radius: 50%; width: 4.4mm; height: 4.4mm; line-height: 4.4mm; text-align: center; font-size: 7.4pt; margin-right: 1mm; }
+  .step h3 { font-size: 9pt; margin: 0 0 1mm; display: flex; align-items: center; }
+  .step p { margin: 0 0 1mm; }
+  .tag { display: inline-block; border-radius: 2px; padding: 0 1.1mm; font-size: 7.2pt; font-weight: 600; margin: .3mm .4mm 0 0; white-space: nowrap; }
+  .m { background: var(--llm-soft); color: var(--llm); }
+  .t { background: var(--brand-soft); color: var(--brand); }
+  .no { background: var(--ok-soft); color: var(--ok); }
+  .grid3 { display: grid; grid-template-columns: 1.05fr 1.5fr .9fr; gap: 2.4mm; }
+  .box { border: 1px solid var(--line); border-radius: 3px; padding: 1.5mm 2mm; background: var(--bg); }
+  table { width: 100%; border-collapse: collapse; font-size: 7.9pt; }
+  th, td { text-align: left; padding: .4mm 1mm; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 7.4pt; }
+  td.n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  code { font: 7.5pt "Cascadia Mono", Consolas, monospace; background: var(--panel); padding: 0 .8mm; border-radius: 2px; }
+  ul { margin: 0; padding-left: 3.6mm; } li { margin: 0 0 .5mm; }
+  .grid3b { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 2.4mm; }
+  .warn { background: var(--warn-soft); border-color: var(--warn); }
+  .warn h2 { color: var(--warn); }
+  .ok h2 { color: var(--ok); }
+  footer { color: var(--muted); font-size: 6.8pt; display: flex; justify-content: space-between; }
+  @media print { html, body { background: #fff; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <h1>Underwriting asistent – technická flow</h1>
+    <div class="sub">Hackathon track 06 (back-office) · dokumenty → pravidla → znalostní báze · AWS Bedrock, region <b>eu-north-1</b> · pouze syntetická data</div>
+  </header>
+
+  <section>
+    <h2>Tok zpracování jednoho případu (složka PDF)</h2>
+    <div class="flow">
+      <div class="step"><h3><span class="num">1</span>Vstup</h3>
+        <p>Složka případu: born-digital PDF i <b>skeny</b>, různé názvy souborů (název se nepoužívá).</p>
+        <p><span class="tag t">Streamlit upload</span><span class="tag t">složka / S3</span></p></div>
+
+      <div class="step"><h3><span class="num">2</span>Předzpracování</h3>
+        <p>Je textová vrstva? <b>Ano</b> → text + podpisy z vektorových kreseb (zdarma). <b>Ne</b> → obrázky stran 110 dpi + autocontrast.</p>
+        <p><span class="tag t">PyMuPDF</span><span class="tag t">Pillow</span><span class="tag no">bez OCR</span></p></div>
+
+      <div class="step"><h3><span class="num">3</span>Hlavička a segmentace</h3>
+        <p>Jen sken: přepis nadpisu a hlavičky; rozdělení souboru na dokumenty (dva dokumenty v jednom skenu).</p>
+        <p><span class="tag m">Haiku 5.5</span><span class="tag t">Converse + image</span></p></div>
+
+      <div class="step"><h3><span class="num">4</span>Klasifikace</h3>
+        <p>Vektor hlavičky → <b>kNN v znalostní bázi</b> (hlasují jen ověřené štítky). Shoda ≥ práh = hotovo <b>bez LLM</b>. Jinak model s příklady z báze.</p>
+        <p><span class="tag m">Titan Embed V2</span><span class="tag m">Sonnet 5.5</span></p></div>
+
+      <div class="step"><h3><span class="num">5</span>Extrakce</h3>
+        <p>Jen atributy daného typu (z <code>taxonomy.yaml</code>) → JSON: hodnota, strana, citace, jistota. <b>Eskalace</b> při nízké jistotě, neplatném IČO, nečitelné ceně.</p>
+        <p><span class="tag m">Haiku 5.5</span>→<span class="tag m">Sonnet 5.5</span>→<span class="tag m">Opus 5.5</span></p></div>
+
+      <div class="step"><h3><span class="num">6</span>Pravidla</h3>
+        <p>Rules engine z YAML: konzistence, přítomnost, <b>KYC</b>, podpisy (11 pravidel). Shoda bez diakritiky, mezer a právní formy; hraniční případ rozhodne model.</p>
+        <p><span class="tag t">Python</span><span class="tag t">ARES</span><span class="tag t">VIES</span><span class="tag m">Haiku 5.5</span></p></div>
+
+      <div class="step"><h3><span class="num">7</span>Výstup a učení</h3>
+        <p>Report a semafor s důkazy. <b>Člověk potvrdí / opraví typ</b> → dokument se stane ověřeným příkladem báze. Agent přes MCP: „proč selhalo pravidlo X?“</p>
+        <p><span class="tag t">Streamlit</span><span class="tag t">MCP</span><span class="tag m">Sonnet 5.5</span></p></div>
+    </div>
+  </section>
+
+  <section class="grid3">
+    <div class="box">
+      <h2>Datová vrstva</h2>
+      <ul>
+        <li><b>Tabulky:</b> <code>ares_raw</code>, <code>uw_documents</code>, <code>uw_attributes</code>, <code>uw_rule_results</code>, <code>uw_vectors</code>, <code>uw_feedback</code></li>
+        <li><b>Vektory:</b> první strana dokumentu a shrnutí případu; klíč dokument + model, vektory modelů se nemíchají</li>
+        <li><b>Sémantická vrstva</b> (YAML): metriky a dimenze → bezpečné SQL (whitelist, parametry)</li>
+        <li><b>MCP server</b> (14 nástrojů): podobné dokumenty, příklady, precedenty případů, statistika pravidel, zpětná vazba</li>
+        <li><b>Úložiště:</b> SQLite (vývoj) → PostgreSQL + pgvector (škálování)</li>
+      </ul>
+    </div>
+
+    <div class="box">
+      <h2>Modely (Bedrock, EU profily <code>eu.*</code>) – cena listová, USD / 1M tokenů vstup / výstup</h2>
+      <table>
+        <tr><th>Model</th><th class="n">Cena</th><th>Použití</th></tr>
+        <tr><td><b>Haiku 5.5</b></td><td class="n">0,10 / 0,50</td><td>hlavička, segmentace, 1. extrakce, rozhodce shody</td></tr>
+        <tr><td><b>Sonnet 5.5</b></td><td class="n">2 / 10</td><td>nejistá klasifikace, 1. eskalace extrakce, agent</td></tr>
+        <tr><td><b>Opus 5.5</b></td><td class="n">4 / 20</td><td>jen 2. eskalace u těžkých skenů</td></tr>
+        <tr><td><b>Titan Text Embeddings V2</b></td><td class="n">–</td><td>vektory (vícejazyčné), kNN báze</td></tr>
+        <tr><td>K benchmarku</td><td class="n">–</td><td>Nova 2 Lite (vizuální, levnější), Cohere Embed v4 (obrazové vektory stran)</td></tr>
+      </table>
+      <p style="margin:1mm 0 0;color:var(--muted)">Cena je Anthropic první strany; Bedrock ji má samostatnou. Model pro každý krok je v konfiguraci, vybírá se podle měření na evaluační sadě.</p>
+    </div>
+
+    <div class="box">
+      <h2>Tech stack</h2>
+      <ul>
+        <li>Python 3.11, pydantic, YAML konfigurace</li>
+        <li>boto3 · Bedrock Converse (obrazové bloky)</li>
+        <li>PyMuPDF, Pillow, reportlab (syntetická data)</li>
+        <li>SQLAlchemy 2, numpy (kNN)</li>
+        <li>FastAPI, Streamlit, MCP SDK (stdio)</li>
+        <li>pytest (45+ testů), evaluace proti <code>truth.json</code></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="grid3b">
+    <div class="box ok">
+      <h2>Odhad čísel (ne měření)</h2>
+      <ul>
+        <li><b>Náklad na případ:</b> asi 0,05–0,20 USD proti 0,43 USD v PoV (GPT-5.2 + Azure OCR, únor 2026). Úspora z kaskády Haiku → Sonnet, cache a rychlé cesty z báze.</li>
+        <li><b>Přesnost pravidel:</b> PoV 97,2 % (140/144, interval 93–99 %). Cíl 98–99,5 %: vizuální čtení odstraní chyby OCR, segmentace řeší dva dokumenty v jednom skenu.</li>
+        <li>Rozdíl pod ~3 p. b. se na 144 pravidlech nedá prokázat, proto vlastní sady <code>eval_a–d</code> (60 případů, 660 pravidel; rozliší rozdíl kolem 1 p. b.).</li>
+      </ul>
+    </div>
+    <div class="box warn">
+      <h2>Stav a rizika</h2>
+      <ul>
+        <li>Pipeline, báze, pravidla, MCP a UI běží a jsou testované v mock režimu.</li>
+        <li>Vizuální cesta je ověřená jen na falešném modelu; účet zatím neumožňuje volání Bedrocku.</li>
+        <li>Textract není v <code>eu-north-1</code>, proto vizuální model místo OCR.</li>
+        <li>Mock embeddingy jsou lexikální; práh báze se kalibruje až na Titanu.</li>
+      </ul>
+    </div>
+    <div class="box">
+      <h2>Responsible AI a compliance</h2>
+      <ul>
+        <li>U každé hodnoty strana a citace; model bez důkazu hodnotu nevrací.</li>
+        <li>Strojové štítky nehlasují, dokud je člověk nepotvrdí.</li>
+        <li>Lidské schválení u každého nálezu; model rozhoduje jen hraniční shody.</li>
+        <li>EU region a profily <code>eu.*</code>; jen syntetická data, žádné reálné osobní údaje.</li>
+        <li>MCP smí číst jen složky pod povoleným kořenem.</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    <span>Repo: Mavorte/hackaton_kb (claude/hackathon-next) · spuštění: <code>streamlit run src/kb/ui.py</code></span>
+    <span>Legenda: <span class="tag m">model</span> <span class="tag t">technologie</span> <span class="tag no">bez LLM / bez OCR</span></span>
+  </footer>
+</div>
+</body>
+</html>
