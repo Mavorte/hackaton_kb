@@ -1,0 +1,87 @@
+# Konfigurace underwritingu (jako v PoV: dokumenty, atributy, pravidla - bez pevne logiky v kodu).
+doc_types:
+  smlouva_o_uveru:
+    title: Smlouva o úvěru
+    description: Právní dohoda, kterou věřitel poskytuje úvěrovanému (nájemci) financování předmětu. Obsahuje strany, předmět, cenu a počet splátek a podpisy.
+    keywords: [smlouva o úvěru, leasingová smlouva, úvěrovaný, věřitel, předmět financování, smluvní strany]
+    attributes: [NAJEMCE__Nazev, NAJEMCE__ICO, NAJEMCE__DIC, NAJEMCE__Adresa, DODAVATEL__Nazev, PREDMET__Nazev, CENA, SPLATKA__Pocet]
+  objednavka:
+    title: Objednávka
+    description: Objednávka předmětu financování od klienta u dodavatele, s cenou a identifikací obou stran.
+    keywords: [objednávka, objednatel, dodavatel, prodávající, předmět objednávky]
+    attributes: [NAJEMCE__Nazev, NAJEMCE__ICO, NAJEMCE__Adresa, DODAVATEL__Nazev, DODAVATEL__ICO, PREDMET__Nazev, CENA]
+  predavaci_protokol:
+    title: Předávací protokol
+    description: Potvrzení, že klient převzal předmět financování od dodavatele; podepisuje se při předání.
+    keywords: [předávací protokol, převzal, předání, protokol o převzetí, datum převzetí]
+    attributes: [NAJEMCE__Nazev, PREDMET__Nazev]
+  platebni_kalendar:
+    title: Informativní platební kalendář
+    description: Přehled měsíčních splátek a jejich počtu pro klienta.
+    keywords: [platební kalendář, splátka, splátkový kalendář, počet splátek, měsíční splátka]
+    attributes: [NAJEMCE__Nazev, SPLATKA__Pocet]
+  prohlaseni_o_rucenii:
+    title: Prohlášení o ručení
+    description: Prohlášení ručitele, že ručí za závazky dlužníka z úvěru.
+    keywords: [prohlášení o ručení, ručitel, ručím, dlužník, ručení]
+    attributes: [NAJEMCE__Nazev, NAJEMCE__ICO]
+  vop:
+    title: Všeobecné obchodní podmínky
+    description: Standardizované všeobecné podmínky věřitele; obsahují obecná ustanovení bez údajů o konkrétním klientovi.
+    keywords: [všeobecné obchodní podmínky, obecná ustanovení, rámcové podmínky, vop]
+    attributes: []
+
+attributes:
+  NAJEMCE__Nazev:
+    description: Oficiální název firmy nájemce (klienta, úvěrovaného)
+    compare: text
+    labels: [Nájemce, Úvěrovaný, Klient, Objednatel, Dlužník, Převzal]
+  NAJEMCE__ICO:
+    description: IČO nájemce (osmimístné)
+    compare: exact
+    labels: [IČO nájemce, IČO úvěrovaného, IČO klienta, IČO objednatele, IČO dlužníka]
+  NAJEMCE__DIC:
+    description: DIČ nájemce
+    compare: exact
+    labels: [DIČ nájemce, DIČ úvěrovaného, DIČ klienta]
+  NAJEMCE__Adresa:
+    description: Sídlo nájemce
+    compare: text
+    labels: [Sídlo nájemce, Sídlo úvěrovaného, Sídlo klienta, Adresa objednatele]
+  DODAVATEL__Nazev:
+    description: Název dodavatele (prodávajícího)
+    compare: text
+    labels: [Dodavatel, Prodávající]
+  DODAVATEL__ICO:
+    description: IČO dodavatele
+    compare: exact
+    labels: [IČO dodavatele, IČO prodávajícího]
+  PREDMET__Nazev:
+    description: Název předmětu financování
+    compare: text
+    labels: [Předmět financování, Předmět, Předmět objednávky, Předmět plnění]
+  CENA:
+    description: Cena předmětu v Kč
+    compare: number
+    labels: [Cena, Kupní cena, Celková cena]
+  SPLATKA__Pocet:
+    description: Počet měsíčních splátek
+    compare: number
+    labels: [Počet splátek, Počet měsíčních splátek]
+
+rules:
+  - {id: R01_nazev_najemce, type: consistency, attribute: NAJEMCE__Nazev, description: Název nájemce je shodný ve všech dokumentech}
+  - {id: R02_ico_najemce, type: consistency, attribute: NAJEMCE__ICO, description: IČO nájemce je shodné ve všech dokumentech}
+  - {id: R03_predmet, type: consistency, attribute: PREDMET__Nazev, description: Předmět financování je shodný ve všech dokumentech}
+  - {id: R04_cena, type: consistency, attribute: CENA, description: Cena je shodná ve všech dokumentech}
+  - {id: R05_pocet_splatek, type: consistency, attribute: SPLATKA__Pocet, description: Počet splátek je shodný}
+  - id: R06_pritomnost
+    type: presence
+    description: Jsou přítomny všechny povinné dokumenty
+    required: [smlouva_o_uveru, objednavka, predavaci_protokol, platebni_kalendar, prohlaseni_o_rucenii]
+    optional: [vop]
+  - {id: R07_ico_existuje, type: kyc, check: ico_exists, description: IČO existuje v ARES}
+  - {id: R08_nazev_ares, type: kyc, check: name_matches, description: Název v dokumentech odpovídá ARES}
+  - {id: R09_aktivni, type: kyc, check: active, description: Nájemce je v ARES aktivní (nezanikl)}
+  - {id: R10_podpisy_smlouva, type: signatures, doc_type: smlouva_o_uveru, min: 2, description: Smlouva o úvěru má alespoň 2 podpisy}
+  - {id: R11_podpis_protokol, type: signatures, doc_type: predavaci_protokol, min: 1, description: Předávací protokol má podpis}

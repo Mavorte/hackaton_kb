@@ -90,6 +90,84 @@ class CompanyVector(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
 
 
+class UwCase(Base):
+    """Underwriting pripad = slozka dokumentu jednoho klienta."""
+
+    __tablename__ = "uw_cases"
+
+    case_id: Mapped[str] = mapped_column(String, primary_key=True)
+    product: Mapped[str | None]
+    company_ico: Mapped[str | None]
+    summary: Mapped[str | None]
+    processed_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class UwDocument(Base):
+    __tablename__ = "uw_documents"
+
+    doc_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    case_id: Mapped[str] = mapped_column(String, index=True)
+    filename: Mapped[str] = mapped_column(String)
+    page_count: Mapped[int] = mapped_column(Integer)
+    doc_type: Mapped[str | None]
+    # seed/human = overeny stitek (z nej se uci kNN), auto = prirazeno strojove, ceka na potvrzeni
+    label_source: Mapped[str] = mapped_column(String, default="auto")
+    label_method: Mapped[str | None]  # kb | llm | rules
+    label_confidence: Mapped[float | None] = mapped_column(Float)
+    first_page_text: Mapped[str] = mapped_column(String, default="")
+    signatures: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
+class UwVector(Base):
+    __tablename__ = "uw_vectors"
+
+    doc_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    model: Mapped[str] = mapped_column(String, primary_key=True)
+    dim: Mapped[int] = mapped_column(Integer)
+    vector: Mapped[bytes] = mapped_column(LargeBinary)
+
+
+class UwAttribute(Base):
+    __tablename__ = "uw_attributes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    case_id: Mapped[str] = mapped_column(String, index=True)
+    doc_id: Mapped[int] = mapped_column(Integer)
+    doc_type: Mapped[str | None]
+    attribute: Mapped[str] = mapped_column(String)
+    value: Mapped[str | None]
+    page: Mapped[int | None] = mapped_column(Integer)
+    quote: Mapped[str | None]
+    confidence: Mapped[float | None] = mapped_column(Float)
+
+
+class UwRuleResult(Base):
+    """Denormalizovano (product) kvuli semanticke vrstve."""
+
+    __tablename__ = "uw_rule_results"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    case_id: Mapped[str] = mapped_column(String, index=True)
+    product: Mapped[str | None]
+    rule_id: Mapped[str] = mapped_column(String)
+    rule_type: Mapped[str] = mapped_column(String)
+    outcome: Mapped[str] = mapped_column(String)  # PASS | FAIL | NA
+    is_fail: Mapped[bool] = mapped_column(Boolean)
+    message: Mapped[str] = mapped_column(String, default="")
+    details: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
+class UwFeedback(Base):
+    __tablename__ = "uw_feedback"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    doc_id: Mapped[int] = mapped_column(Integer)
+    old_label: Mapped[str | None]
+    new_label: Mapped[str]
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_now)
+
+
 @lru_cache
 def get_engine() -> Engine:
     url = get_settings().database_url
