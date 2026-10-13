@@ -19,6 +19,8 @@ from kb.config import get_settings
 from kb.uw import gen, pipeline
 from kb.uw.prices import estimate_cost
 
+SPEND: dict[str, dict[str, int]] = {}  # souhrn tokenu pres vsechny testy (pocitadlo se mezi testy nuluje)
+
 pytestmark = [pytest.mark.live, pytest.mark.skipif(os.environ.get("LIVE_AWS") != "1", reason="nastav LIVE_AWS=1 (a prihlas se: aws sso login)")]
 
 
@@ -32,6 +34,10 @@ def live_env(monkeypatch, tmp_path):
     db.get_engine.cache_clear()
     bedrock.meter.reset()
     yield tmp_path / "uw"
+    for model, u in bedrock.meter.snapshot().items():
+        t = SPEND.setdefault(model, {"input": 0, "output": 0, "calls": 0})
+        for k in t:
+            t[k] += u[k]
     get_settings.cache_clear()
     db.get_engine.cache_clear()
 
@@ -121,5 +127,4 @@ def test_07_agent_uses_mcp_tools_with_real_model(embeddings):
 
 
 def test_99_spend_summary():
-    usage = bedrock.meter.snapshot()
-    print(f"\n  tokeny podle modelu: {json.dumps(usage)}\n  odhad nakladu: {estimate_cost(usage)}")
+    print(f"\n  tokeny podle modelu: {json.dumps(SPEND)}\n  odhad nakladu (jen volani pres kb.aws.bedrock.ask; embeddingy a agent v tom nejsou): {estimate_cost(SPEND)}")
