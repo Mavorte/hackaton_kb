@@ -1,3 +1,21 @@
+# Projektová pravidla: hackathonový AWS účet (mají přednost před obecnými AWS pravidly níže)
+
+Účet týmu z hackathonu FinTechers x Deloitte x AWS (Praha, 19.-20. 10. 2026). Tyto body platí místo osobního účtu v `eu-north-1`:
+
+- **Region:** vše se tvoří a volá v `eu-central-1` (Frankfurt). Přihlášení SSO žije v `eu-north-1` (jen v `aws configure sso`).
+- **Přihlášení:** SSO profil `hackathon` (`aws sso login --profile hackathon`, platnost 12 h). Žádné IAM uživatele ani přístupové klíče
+  (jsou zablokované); kód, který potřebuje oprávnění, dostane IAM roli. Nikdy neukládej tajné klíče do gitu.
+- **Modely:** Claude jen přes EU profily s prefixem `eu.` (`eu.anthropic.claude-haiku-4-5-20251001-v1:0`,
+  `eu.anthropic.claude-sonnet-4-5-20250929-v1:0`, `eu.anthropic.claude-opus-4-5-20251101-v1:0`). Claude 5 na účtu není a nejde zapnout.
+  Bez prefixu (Qwen, GPT-OSS, GLM, Nemotron, Devstral, MiniMax) jsou modely s limitem 100M tokenů/min; Nova a Pixtral přes `eu.` profily.
+- **Limity a cena:** limit týmu je sdílený (Claude 50 požadavků/min, Opus 25). Rozpočet 1 080 USD je sdílený a nic ho neřeže, jen hlásí
+  organizátorům. Výstupní tokeny stojí nejvíc; cache vstupu je 10x levnější. Hromadné vyhodnocování dělej na Qwen/Nova.
+- **Zablokováno:** jiné regiony než Frankfurt, IAM uživatelé a klíče, velké a GPU instance (jen t3/t4g, m6i/m7g large a xlarge, c6i/c7g large),
+  služby placené v klidu (rezervace, Savings Plans, Redshift, MSK, EMR a další). Chyba je konečná, neřeš ji obcházením.
+- **Úklid a odevzdání:** před koncem smaž to, co se účtuje v klidu (OpenSearch, RDS, load balancery, NAT brány). Kód nahraj na vlastní
+  repozitář (účty se po akci zmrazí). Code freeze je ve 12:30 druhého dne: repozitář, dvouminutové demo video a jednostránkové shrnutí.
+- Pro lokální vývoj bez AWS: `LLM_PROVIDER=mock OFFLINE=1`.
+
 <!-- BEGIN AWS Agent Toolkit rules -->
 # AWS Guidance for the new AWS experience
 

@@ -52,7 +52,7 @@
 <div class="page">
   <header>
     <h1>Underwriting asistent – technická flow</h1>
-    <div class="sub">Hackathon track 06 (back-office) · dokumenty → pravidla → znalostní báze · AWS Bedrock, region <b>eu-north-1</b> · pouze syntetická data</div>
+    <div class="sub">Hackathon track 06 (back-office) · dokumenty → pravidla → znalostní báze · AWS Bedrock, region <b>eu-central-1</b> (profily eu.*) · pouze syntetická data</div>
   </header>
 
   <section>
@@ -68,23 +68,23 @@
 
       <div class="step"><h3><span class="num">3</span>Hlavička a segmentace</h3>
         <p>Jen sken: přepis nadpisu a hlavičky; rozdělení souboru na dokumenty (dva dokumenty v jednom skenu).</p>
-        <p><span class="tag m">Haiku 5.5</span><span class="tag t">Converse + image</span></p></div>
+        <p><span class="tag m">Haiku 4.5</span><span class="tag t">Converse + image</span></p></div>
 
       <div class="step"><h3><span class="num">4</span>Klasifikace</h3>
         <p>Vektor hlavičky → <b>kNN v znalostní bázi</b> (hlasují jen ověřené štítky). Shoda ≥ práh = hotovo <b>bez LLM</b>. Jinak model s příklady z báze.</p>
-        <p><span class="tag m">Titan Embed V2</span><span class="tag m">Sonnet 5.5</span></p></div>
+        <p><span class="tag m">Titan Embed V2</span><span class="tag m">Sonnet 4.5</span></p></div>
 
       <div class="step"><h3><span class="num">5</span>Extrakce</h3>
         <p>Jen atributy daného typu (z <code>taxonomy.yaml</code>) → JSON: hodnota, strana, citace, jistota. <b>Eskalace</b> při nízké jistotě, neplatném IČO, nečitelné ceně.</p>
-        <p><span class="tag m">Haiku 5.5</span>→<span class="tag m">Sonnet 5.5</span>→<span class="tag m">Opus 5.5</span></p></div>
+        <p><span class="tag m">Haiku 4.5</span>→<span class="tag m">Sonnet 4.5</span>→<span class="tag m">Opus 4.5</span></p></div>
 
       <div class="step"><h3><span class="num">6</span>Pravidla</h3>
         <p>Rules engine z YAML: konzistence, přítomnost, <b>KYC</b>, podpisy (11 pravidel). Shoda bez diakritiky, mezer a právní formy; hraniční případ rozhodne model.</p>
-        <p><span class="tag t">Python</span><span class="tag t">ARES</span><span class="tag t">VIES</span><span class="tag m">Haiku 5.5</span></p></div>
+        <p><span class="tag t">Python</span><span class="tag t">ARES</span><span class="tag t">VIES</span><span class="tag m">Haiku 4.5</span></p></div>
 
       <div class="step"><h3><span class="num">7</span>Výstup a učení</h3>
         <p>Report a semafor s důkazy. <b>Člověk potvrdí / opraví typ</b> → dokument se stane ověřeným příkladem báze. Agent přes MCP: „proč selhalo pravidlo X?“</p>
-        <p><span class="tag t">Streamlit</span><span class="tag t">MCP</span><span class="tag m">Sonnet 5.5</span></p></div>
+        <p><span class="tag t">Streamlit</span><span class="tag t">MCP</span><span class="tag m">Sonnet 4.5</span></p></div>
     </div>
   </section>
 
@@ -101,16 +101,16 @@
     </div>
 
     <div class="box">
-      <h2>Modely (Bedrock, EU profily <code>eu.*</code>) – cena listová, USD / 1M tokenů vstup / výstup</h2>
+      <h2>Modely (hackathonový účet) – USD / 1M tokenů vstup / výstup, limit týmu</h2>
       <table>
         <tr><th>Model</th><th class="n">Cena</th><th>Použití</th></tr>
-        <tr><td><b>Haiku 5.5</b></td><td class="n">0,10 / 0,50</td><td>hlavička, segmentace, 1. extrakce, rozhodce shody</td></tr>
-        <tr><td><b>Sonnet 5.5</b></td><td class="n">2 / 10</td><td>nejistá klasifikace, 1. eskalace extrakce, agent</td></tr>
-        <tr><td><b>Opus 5.5</b></td><td class="n">4 / 20</td><td>jen 2. eskalace u těžkých skenů</td></tr>
-        <tr><td><b>Titan Text Embeddings V2</b></td><td class="n">–</td><td>vektory (vícejazyčné), kNN báze</td></tr>
-        <tr><td>K benchmarku</td><td class="n">–</td><td>Nova 2 Lite (vizuální, levnější), Cohere Embed v4 (obrazové vektory stran)</td></tr>
+        <tr><td><b>Haiku 4.5</b></td><td class="n">1,10 / 5,50</td><td>hlavička, segmentace, 1. extrakce, rozhodce shody (50 req/min)</td></tr>
+        <tr><td><b>Sonnet 4.5</b></td><td class="n">3,30 / 16,50</td><td>nejistá klasifikace, 1. eskalace, agent (50 req/min)</td></tr>
+        <tr><td><b>Opus 4.5</b></td><td class="n">5,50 / 27,50</td><td>jen 2. eskalace u těžkých skenů (25 req/min)</td></tr>
+        <tr><td><b>Titan Embed V2</b></td><td class="n">–</td><td>vektory kNN; v seznamu hackathonu není → ověřit, záloha mock hash</td></tr>
+        <tr><td>K benchmarku</td><td class="n">–</td><td>Nova 2 Lite (vizuální, 8M tok/min); Qwen3-235B, GPT-OSS-120B (jen text, 100M tok/min) na hromadné evaluace</td></tr>
       </table>
-      <p style="margin:1mm 0 0;color:var(--muted)">Cena je Anthropic první strany; Bedrock ji má samostatnou. Model pro každý krok je v konfiguraci, vybírá se podle měření na evaluační sadě.</p>
+      <p style="margin:1mm 0 0;color:var(--muted)">Ceny a limity z návodu organizátorů. Claude 5 na účtu není. Cachovaný vstup je 10× levnější. Model pro každý krok je v konfiguraci (<code>UW_MODEL_*</code>) a vybírá se podle měření.</p>
     </div>
 
     <div class="box">
@@ -130,7 +130,7 @@
     <div class="box ok">
       <h2>Odhad čísel (ne měření)</h2>
       <ul>
-        <li><b>Náklad na případ:</b> asi 0,05–0,20 USD proti 0,43 USD v PoV (GPT-5.2 + Azure OCR, únor 2026). Úspora z kaskády Haiku → Sonnet, cache a rychlé cesty z báze.</li>
+        <li><b>Náklad na případ:</b> asi 0,20–0,40 USD (profil PoV 131 tis. vstup / 10 tis. výstup: Haiku 4.5 0,20; Sonnet 4.5 0,60; kaskáda ≈ 0,28) proti 0,43 USD v PoV. Úspora z cache a rychlé cesty z báze; výrazně nižší jen s Nova nebo Qwen.</li>
         <li><b>Přesnost pravidel:</b> PoV 97,2 % (140/144, interval 93–99 %). Cíl 98–99,5 %: vizuální čtení odstraní chyby OCR, segmentace řeší dva dokumenty v jednom skenu.</li>
         <li>Rozdíl pod ~3 p. b. se na 144 pravidlech nedá prokázat, proto vlastní sady <code>eval_a–d</code> (60 případů, 660 pravidel; rozliší rozdíl kolem 1 p. b.).</li>
       </ul>
@@ -139,8 +139,8 @@
       <h2>Stav a rizika</h2>
       <ul>
         <li>Pipeline, báze, pravidla, MCP a UI běží a jsou testované v mock režimu.</li>
-        <li>Vizuální cesta je ověřená jen na falešném modelu; účet zatím neumožňuje volání Bedrocku.</li>
-        <li>Textract není v <code>eu-north-1</code>, proto vizuální model místo OCR.</li>
+        <li>Vizuální cesta je ověřená jen na falešném modelu; živě se ověří na hackathonovém účtu (<code>check_aws.py</code>).</li>
+        <li>Limit týmu 50 req/min (Opus 25): sken ≈ 15 volání, tedy ~3 případy/min; lokální brzda a opakování, hromadné testy na Qwen/Nova.</li>
         <li>Mock embeddingy jsou lexikální; práh báze se kalibruje až na Titanu.</li>
       </ul>
     </div>

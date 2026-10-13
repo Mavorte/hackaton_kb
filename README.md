@@ -113,6 +113,33 @@ Inspirováno PoV „AI for Customer Care“ (kontrola podkladů k úvěru). Vše
 Pozn.: vizuální cesta je ověřená jen na falešném modelu (`tests/test_uw_visual.py`), účet zatím blokuje volání modelů. Jedno technické
 shrnutí na stránku: `docs/technicka-flow.html` (PDF: `docs/technicka-flow.pdf`).
 
+## Hackathonový AWS účet (návod organizátorů v kostce)
+
+Každý tým má vlastní účet s Bedrockem, rozpočtem 1 080 USD (sdílený) a admin právy uvnitř účtu.
+Portál: `https://d-c3676ff6eb.awsapps.com/start` · role `ai-hackathon-TeamAdmin` · session 12 h.
+
+1. **První přihlášení:** e-mail → jednorázový kód z e-mailu → registrace authenticator aplikace (potřebuješ telefon) → vyber účet týmu a roli.
+   Hned nastav v konzoli region **Frankfurt (eu-central-1)**.
+2. **CLI přes SSO** (přístupové klíče jsou zablokované):
+
+       aws configure sso        # session: hackathon, start URL výše, SSO region: eu-north-1, výchozí region klienta: eu-central-1, formát json
+       aws sso login --profile hackathon       # jednou denně (12 h), i přes noc
+       aws sts get-caller-identity --profile hackathon
+
+   Chyba „no instances found“ = zadal jsi eu-central-1 jako SSO region; ten je `eu-north-1`.
+3. **Repo:** zkopíruj `.env.example` na `.env` (profil `hackathon`, region `eu-central-1`) a spusť `python scripts/check_aws.py`.
+   Skript ověří identitu, modely (fast/strong/hard), obrazový vstup i embeddingy a u chyb poradí podle tabulky organizátorů.
+4. **Modely** (USD za 1M tokenů vstup/výstup, limit týmu): Haiku 4.5 `eu.anthropic.claude-haiku-4-5-20251001-v1:0` 1,10/5,50 (50 req/min),
+   Sonnet 4.5 `eu.anthropic.claude-sonnet-4-5-20250929-v1:0` 3,30/16,50 (50 req/min), Opus 4.5 `eu.anthropic.claude-opus-4-5-20251101-v1:0`
+   5,50/27,50 (25 req/min). Claude 5 nejde. Bez prefixu a s limitem 100M tok/min: Qwen3-235B/32B/Coder, GLM-4.7-Flash, Nemotron,
+   Devstral, MiniMax M2.5, GPT-OSS-120B/20B. Přes `eu.` profil: Nova 2 Lite/Pro/Lite/Micro, Pixtral Large.
+5. **Limity v kódu:** `BEDROCK_MAX_RPM` (výchozí 40) hlídá rozestup volání a klient opakuje při `ThrottlingException`. Skenový případ dělá asi
+   15 volání, takže celý tým zvládne zhruba 3 případy za minutu. Hromadné evaluace pusť na Qwen/Nova (`UW_MODEL_FAST=...`).
+6. **Zablokováno:** jiné regiony, IAM uživatelé a klíče (pro běžící kód použij IAM roli), velké a GPU instance, služby placené v klidu.
+7. **Před koncem:** push kódu na vlastní repo, smazat OpenSearch/RDS/load balancery/NAT brány, code freeze 12:30 druhého dne (repo,
+   2min video, jednostránkové shrnutí). Náklady jsou v Cost Exploreru s prodlevou až 24 h; částky pod 1 cent se ukazují jako 0.
+8. **Embeddingy:** Titan není v seznamu modelů hackathonu. Pokud ho `check_aws.py` nenajde, nastav `EMBED_PROVIDER=mock` (lexikální hash).
+
 ## Testy
 
     pytest

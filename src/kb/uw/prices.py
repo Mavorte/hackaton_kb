@@ -1,7 +1,20 @@
-"""Orientacni cenik (USD za 1M tokenu, vstup/vystup): LISTOVE CENY Anthropic prvni strany.
-Ceny na Bedrocku jsou samostatne a mohou se lisit - pred rozhodnutim je over na strance cen Bedrocku."""
+"""Orientacni cenik (USD za 1M tokenu, vstup/vystup).
 
-PRICES = {"haiku-5-5": (0.10, 0.50), "sonnet-5-5": (2.0, 10.0), "opus-5-5": (4.0, 20.0), "fable-5-1": (10.0, 50.0)}
+Hackathonovy ucet (Bedrock, EU profily, overeno organizatory): Haiku 4.5 1.10/5.50, Sonnet 4.5 3.30/16.50, Opus 4.5 5.50/27.50;
+cachovany vstup je 10x levnejsi (Sonnet 4.5: 0.33). Radka Claude 5 tam neni k dispozici - ceny 5.x jsou jen listove (Anthropic prvni strany)
+pro srovnani. Modely mimo Claude (Nova, Qwen, GPT-OSS...) nemaji v podkladech cenu -> hlasi se jako 'unpriced'.
+"""
+
+PRICES = {
+    "haiku-4-5": (1.10, 5.50),
+    "sonnet-4-5": (3.30, 16.50),
+    "opus-4-5": (5.50, 27.50),
+    # jen srovnani (neni na hackathonovem ucte):
+    "haiku-5-5": (0.10, 0.50),
+    "sonnet-5-5": (2.0, 10.0),
+    "opus-5-5": (4.0, 20.0),
+    "fable-5-1": (10.0, 50.0),
+}
 
 
 def estimate_cost(usage: dict) -> dict:

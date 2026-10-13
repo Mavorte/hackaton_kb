@@ -192,3 +192,30 @@ def test_mcp_uw_tools_and_agent_mock(corpus):
     assert out["steps"][0]["tool"] == "uw_explain_rule"
     out = asyncio.run(agent.ask_agent("Která pravidla nejčastěji selhávají?"))
     assert out["steps"][0]["tool"] == "query_metrics" and out["steps"][0]["args"]["entity"] == "uw_rules"
+
+
+def test_rate_limiter_spaces_calls():
+    from kb.aws.bedrock import RateLimiter
+
+    now = {"t": 100.0}
+    slept = []
+    lim = RateLimiter(clock=lambda: now["t"], sleep=lambda d: (slept.append(round(d, 3)), now.__setitem__("t", now["t"] + d)))
+    for _ in range(3):
+        lim.wait(60)  # 60 pozadavku/min = 1 s rozestup
+    assert slept == [1.0, 1.0]  # prvni projde hned, dalsi cekaji
+    lim.wait(0)  # 0 = brzda vypnuta
+    assert slept == [1.0, 1.0]
+
+
+def test_hackathon_defaults_and_prices():
+    from kb.uw.prices import estimate_cost
+
+    s = get_settings()
+    assert s.aws_region == "eu-central-1"
+    assert all(m.startswith("eu.anthropic.claude-") for m in (s.bedrock_model_id, s.uw_model_fast, s.uw_model_strong, s.uw_model_hard))
+    import re
+
+    assert not any(re.search(r"claude-[a-z]+-5(-|$)", m) for m in (s.uw_model_fast, s.uw_model_strong, s.uw_model_hard))  # Claude 5 tam neni
+    usage = {s.uw_model_fast: {"input": 1_000_000, "output": 1_000_000, "calls": 2}, "qwen.qwen3-32b-v1:0": {"input": 10, "output": 10, "calls": 1}}
+    c = estimate_cost(usage)
+    assert c["usd"] == 6.6 and c["unpriced_models"] == ["qwen.qwen3-32b-v1:0"]  # 1.10 + 5.50

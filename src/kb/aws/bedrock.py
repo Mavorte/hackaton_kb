@@ -1,8 +1,11 @@
 """Tenky wrapper nad Bedrock Converse API."""
 import json
 import re
+import threading
+import time
 
 import boto3
+from botocore.config import Config
 
 from kb.config import get_settings
 
@@ -29,6 +32,26 @@ class UsageMeter:
 meter = UsageMeter()
 
 
+class RateLimiter:
+    """Minimalni rozestup mezi volanimi (sdileny limit tymu 50 pozadavku/min). Funguje v ramci jednoho procesu."""
+
+    def __init__(self, clock=time.monotonic, sleep=time.sleep) -> None:
+        self.clock, self.sleep, self.next_at, self.lock = clock, sleep, 0.0, threading.Lock()
+
+    def wait(self, rpm: int) -> None:
+        if rpm <= 0:
+            return
+        with self.lock:
+            now = self.clock()
+            delay = max(0.0, self.next_at - now)
+            self.next_at = max(now, self.next_at) + 60.0 / rpm
+        if delay:
+            self.sleep(delay)
+
+
+limiter = RateLimiter()
+
+
 def session() -> boto3.Session:
     s = get_settings()
     # prazdny AWS_PROFILE z .env nesmi prebit default chain
@@ -36,7 +59,9 @@ def session() -> boto3.Session:
 
 
 def runtime_client():
-    return session().client("bedrock-runtime")
+    # adaptivni opakovani pri ThrottlingException (sdileny limit tymu) a delsi cteni kvuli obrazkovym pozadavkum
+    cfg = Config(retries={"max_attempts": 8, "mode": "adaptive"}, read_timeout=180)
+    return session().client("bedrock-runtime", config=cfg)
 
 
 def ask(
@@ -50,8 +75,10 @@ def ask(
 ) -> str:
     if get_settings().llm_provider == "mock" and client is None:
         return f"[MOCK] Odpoved bez volani modelu. Dotaz: {prompt[:80]}"
-    client = client or runtime_client()
-    # temperature se posila jen na vyzadani: novejsi modely (Opus 5.5) nestandardni hodnotu odmitnou (400)
+    if client is None:
+        limiter.wait(get_settings().bedrock_max_rpm)
+        client = runtime_client()
+    # temperature se posila jen na vyzadani: novejsi modely (rada Claude 5) nestandardni hodnotu odmitnou (400)
     inference = {"maxTokens": max_tokens}
     if temperature is not None:
         inference["temperature"] = temperature
