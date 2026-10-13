@@ -30,6 +30,7 @@ where = ["src"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+markers = ["live: vyzaduje skutecny AWS ucet (LIVE_AWS=1), vola Bedrock a stoji male penize"]
 testpaths = ["tests"]
 
 [tool.setuptools.package-data]

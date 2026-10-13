@@ -140,6 +140,15 @@ Portál: `https://d-c3676ff6eb.awsapps.com/start` · role `ai-hackathon-TeamAdmi
    2min video, jednostránkové shrnutí). Náklady jsou v Cost Exploreru s prodlevou až 24 h; částky pod 1 cent se ukazují jako 0.
 8. **Embeddingy:** Titan není v seznamu modelů hackathonu. Pokud ho `check_aws.py` nenajde, nastav `EMBED_PROVIDER=mock` (lexikální hash).
 
+9. **Test připojení (ty i program):** po `aws sso login --profile hackathon` spusť
+   `python scripts/check_aws.py` (rychlá kontrola, pár halíře) a pak živé testy (stojí řádově USD):
+
+       LIVE_AWS=1 python -m pytest tests/test_live_aws.py -v -s      # PowerShell: $env:LIVE_AWS="1"; python -m pytest tests/test_live_aws.py -v -s
+
+   Ověří identitu a region, každý model (default, fast, strong, hard), obrazový vstup, embeddingy, zpracování textového i skenového
+   případu naším programem (klasifikace, extrakce, pravidla, nalezení vložené chyby) a agenta s nástroji MCP. Vypíše spotřebu tokenů a
+   odhad nákladu. Bez `LIVE_AWS=1` se testy přeskočí.
+
 ## Testy
 
     pytest
