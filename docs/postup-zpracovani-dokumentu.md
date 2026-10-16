@@ -112,12 +112,24 @@ Studený start a zkreslení: vyhodnocovat vždy na dokumentech, které v bázi n
 
 ## 9. Co je ještě potřeba změřit (neověřeno)
 
-1. **OCR vs. multimodální čtení** na naší sadě skenů (`eval_a` až `eval_d`): Textract+LLM proti Haiku 4.5 a Nova 2 Lite. Metriky: přesnost
-   atributů (tolerantní i přísná shoda včetně diakritiky), doba, náklad na dokument. Textract nemusí češtinu zvládat.
-   Spuštění: `python scripts/bench_extraction.py --cases 6 --hard 3` (skript je připravený, s `--dry-run` ověřený jen bez AWS).
+1. **OCR vs. multimodální čtení** [změřeno 16. 10. 2026, 9 skenovaných případů, 50 dokumentů, hackathonový účet]:
+
+   | Varianta | styl A tol./přesně | styl C tol./přesně | s/dok | tokeny | náklad |
+   |---|---|---|---|---|---|
+   | Textract + regex | 70,4 / 59,2 | 0 / 0 | 0 | 0 | jen Textract |
+   | Textract + Haiku 4.5 | 96,8 / 85,6 | 98,4 / 83,9 | 3,9 | 41 508 | 0,113 USD + Textract |
+   | Vision Haiku 4.5 | 97,6 / 92,0 | 95,2 / 91,9 | 5,1 | 117 871 | 0,196 USD |
+   | Vision Nova 2 Lite | 90,4 / 81,6 | 66,1 / 64,5 | 4,4 | 43 249 | cena na účtu nezměřena |
+
+   Závěr: Textract na účtu funguje a češtinu čte, ale při přesné shodě (s diakritikou) je o 6 až 8 b. b. horší než vision Haiku,
+   protože OCR ztrácí háčky a čárky. Tolerantní shoda je u obou vyrovnaná (rozdíl v rámci šumu při 50 dokumentech). OCR+LLM je asi
+   o 40 % levnější na tokenech, ale přičte se cena Textractu (55 stran, asi 0,08 USD podle ceny z paměti, neověřeno). Regex nad OCR
+   nestačí. Nova 2 Lite je na jiné slovní zásobě (styl C) výrazně horší. Jeden případ OCR+LLM spadl na neplatné JSON (chyba
+   parsování odpovědi). Doporučení: ponechat vision Haiku jako výchozí, OCR+LLM jen pro velmi dlouhé dokumenty. Vzorek je malý,
+   rozdíly pod asi 3 b. b. nejsou prokazatelné.
 2. **Obrazové tokeny na stranu** a skutečná cena případu na dokumentech velikosti PoV (131 tis. vstupních tokenů).
 3. **Práh kNN** na Titanu (kalibrace přes `kb.uw.evaluate`).
-4. **Dostupnost** Textractu, Bedrock Data Automation a obrazových embeddingů na hackathonovém účtu.
+4. **Dostupnost** Bedrock Data Automation (Textract ověřen) a obrazových embeddingů na hackathonovém účtu.
 
 ## 10. Limity a náklady (hackathonový účet)
 
